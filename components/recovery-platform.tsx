@@ -1,7 +1,7 @@
 // @ts-nocheck
 "use client";
 
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
   Heart,
@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { supabaseBrowser } from "@/lib/supabase/browser";
 
 const tiers = [
   {
@@ -112,7 +113,103 @@ function Nav() {
   const [open, setOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
   const [storiesOpen, setStoriesOpen] = useState(false);
+  const [session, setSession] = useState(null);
+  const [authMode, setAuthMode] = useState("signin");
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authMessage, setAuthMessage] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [profileInitials, setProfileInitials] = useState("OA");
   const links = ["Heal", "Live", "Give", "Stories", "Pricing"];
+
+  useEffect(() => {
+    let mounted = true;
+
+    async function loadSession() {
+      const { data } = await supabaseBrowser.auth.getSession();
+      if (!mounted) return;
+      setSession(data.session);
+      await loadProfileInitials(data.session);
+    }
+
+    async function loadProfileInitials(activeSession) {
+      if (!activeSession?.user) {
+        setProfileInitials("OA");
+        return;
+      }
+
+      const fallback =
+        activeSession.user.email
+          ?.split("@")[0]
+          ?.slice(0, 2)
+          ?.toUpperCase() || "OA";
+
+      const { data } = await supabaseBrowser
+        .from("profiles")
+        .select("display_initials")
+        .eq("id", activeSession.user.id)
+        .maybeSingle();
+
+      setProfileInitials(data?.display_initials || fallback);
+    }
+
+    loadSession();
+
+    const {
+      data: { subscription },
+    } = supabaseBrowser.auth.onAuthStateChange((_event, nextSession) => {
+      setSession(nextSession);
+      loadProfileInitials(nextSession);
+    });
+
+    return () => {
+      mounted = false;
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  async function handleAuthSubmit(event) {
+    event.preventDefault();
+    setAuthLoading(true);
+    setAuthError("");
+    setAuthMessage("");
+
+    const credentials = {
+      email: authEmail,
+      password: authPassword,
+    };
+
+    const { data, error } =
+      authMode === "signup"
+        ? await supabaseBrowser.auth.signUp(credentials)
+        : await supabaseBrowser.auth.signInWithPassword(credentials);
+
+    if (error) {
+      setAuthError(error.message);
+    } else if (authMode === "signup" && !data.session) {
+      setAuthMessage("Check your email to confirm your account, then come back to sign in.");
+    } else {
+      setAuthMessage(authMode === "signup" ? "Account created." : "Signed in.");
+      setAuthPassword("");
+    }
+
+    setAuthLoading(false);
+  }
+
+  async function handleSignOut() {
+    setAuthLoading(true);
+    setAuthError("");
+    setAuthMessage("");
+    const { error } = await supabaseBrowser.auth.signOut();
+    if (error) {
+      setAuthError(error.message);
+    } else {
+      setSession(null);
+      setProfileInitials("OA");
+    }
+    setAuthLoading(false);
+  }
 
   return (
     <>
@@ -161,9 +258,13 @@ function Nav() {
               type="button"
               onClick={() => setAccountOpen(true)}
               aria-label="Open account management"
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-stone-200 bg-white text-xs font-semibold text-stone-950 shadow-sm transition hover:bg-stone-50"
+              className={
+                session
+                  ? "flex h-10 w-10 items-center justify-center rounded-full border border-stone-200 bg-white text-xs font-semibold text-stone-950 shadow-sm transition hover:bg-stone-50"
+                  : "inline-flex h-10 items-center justify-center rounded-full border border-stone-200 bg-white px-4 text-sm font-semibold text-stone-950 shadow-sm transition hover:bg-stone-50"
+              }
             >
-              OA
+              {session ? profileInitials : "Sign up / Log in"}
             </button>
           </nav>
 
@@ -172,9 +273,13 @@ function Nav() {
               type="button"
               onClick={() => setAccountOpen(true)}
               aria-label="Open account management"
-              className="flex h-10 w-10 items-center justify-center rounded-full border border-stone-200 bg-white text-xs font-semibold text-stone-950 shadow-sm"
+              className={
+                session
+                  ? "flex h-10 w-10 items-center justify-center rounded-full border border-stone-200 bg-white text-xs font-semibold text-stone-950 shadow-sm"
+                  : "inline-flex h-10 items-center justify-center rounded-full border border-stone-200 bg-white px-3 text-xs font-semibold text-stone-950 shadow-sm"
+              }
             >
-              OA
+              {session ? profileInitials : "Sign up / Log in"}
             </button>
             <button className="rounded-xl p-2" onClick={() => setOpen((v) => !v)} aria-label="Toggle navigation">
               {open ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
@@ -227,11 +332,13 @@ function Nav() {
             <div className="mb-8 flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-11 w-11 items-center justify-center rounded-full bg-stone-950 text-sm font-semibold text-white">
-                  OA
+                  {profileInitials}
                 </div>
                 <div>
                   <div className="text-xs font-medium uppercase tracking-[0.25em] text-stone-500">Private Profile</div>
-                  <h1 className="text-2xl font-semibold tracking-tight text-stone-950">Account Management</h1>
+                  <h1 className="text-2xl font-semibold tracking-tight text-stone-950">
+                    {session ? "Account Management" : authMode === "signup" ? "Create Account" : "Sign In"}
+                  </h1>
                 </div>
               </div>
               <button
@@ -243,21 +350,101 @@ function Nav() {
               </button>
             </div>
 
-            <div className="grid gap-5 md:grid-cols-2">
-              {[
-                ["Privacy", "Manage anonymity, story visibility, deletion, sharing, and moderation preferences."],
-                ["Subscription", "View plan, renewal date, billing status, donations, and the 14-day guarantee."],
-                ["Journal", "Open private reflections, recovery notes, appointment notes, and story drafts."],
-                ["Saved Cards", "Return to saved coping cards, prompts, resources, and moderated stories."],
-              ].map(([title, text]) => (
-                <Card key={title} className="rounded-[2rem] border-stone-200 bg-white shadow-sm">
-                  <CardContent className="p-7">
-                    <h2 className="text-xl font-semibold text-stone-950">{title}</h2>
-                    <p className="mt-3 leading-7 text-stone-600">{text}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            {session ? (
+              <>
+                <div className="mb-6 flex flex-col gap-3 rounded-[2rem] border border-stone-200 bg-stone-50 p-5 md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <div className="text-sm font-semibold text-stone-950">{session.user.email}</div>
+                    <div className="mt-1 text-sm text-stone-600">Signed in to your private profile.</div>
+                  </div>
+                  <Button
+                    type="button"
+                    onClick={handleSignOut}
+                    disabled={authLoading}
+                    className="h-11 rounded-full bg-stone-950 px-5 text-white hover:bg-stone-800"
+                  >
+                    {authLoading ? "Signing out..." : "Sign out"}
+                  </Button>
+                </div>
+
+                {authError && <div className="mb-5 rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">{authError}</div>}
+
+                <div className="grid gap-5 md:grid-cols-2">
+                  {[
+                    ["Privacy", "Manage anonymity, story visibility, deletion, sharing, and moderation preferences."],
+                    ["Subscription", "View plan, renewal date, billing status, donations, and the 14-day guarantee."],
+                    ["Journal", "Open private reflections, recovery notes, appointment notes, and story drafts."],
+                    ["Saved Cards", "Return to saved coping cards, prompts, resources, and moderated stories."],
+                  ].map(([title, text]) => (
+                    <Card key={title} className="rounded-[2rem] border-stone-200 bg-white shadow-sm">
+                      <CardContent className="p-7">
+                        <h2 className="text-xl font-semibold text-stone-950">{title}</h2>
+                        <p className="mt-3 leading-7 text-stone-600">{text}</p>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div className="mx-auto max-w-xl rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm md:p-8">
+                <form onSubmit={handleAuthSubmit} className="space-y-5">
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-stone-800" htmlFor="auth-email">
+                      Email
+                    </label>
+                    <input
+                      id="auth-email"
+                      type="email"
+                      required
+                      value={authEmail}
+                      onChange={(event) => setAuthEmail(event.target.value)}
+                      className="h-12 w-full rounded-2xl border border-stone-200 bg-white px-4 text-sm outline-none transition focus:border-stone-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="mb-2 block text-sm font-semibold text-stone-800" htmlFor="auth-password">
+                      Password
+                    </label>
+                    <input
+                      id="auth-password"
+                      type="password"
+                      required
+                      minLength={6}
+                      value={authPassword}
+                      onChange={(event) => setAuthPassword(event.target.value)}
+                      className="h-12 w-full rounded-2xl border border-stone-200 bg-white px-4 text-sm outline-none transition focus:border-stone-500"
+                    />
+                  </div>
+
+                  {authError && <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">{authError}</div>}
+                  {authMessage && <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800">{authMessage}</div>}
+
+                  <Button
+                    type="submit"
+                    disabled={authLoading}
+                    className="h-12 w-full rounded-full bg-stone-950 px-6 text-base text-white hover:bg-stone-800"
+                  >
+                    {authLoading ? "Please wait..." : authMode === "signup" ? "Create account" : "Sign in"}
+                  </Button>
+                </form>
+
+                <div className="mt-5 text-center text-sm text-stone-600">
+                  {authMode === "signup" ? "Already have an account?" : "Need an account?"}{" "}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthMode(authMode === "signup" ? "signin" : "signup");
+                      setAuthError("");
+                      setAuthMessage("");
+                    }}
+                    className="font-semibold text-stone-950 underline underline-offset-4"
+                  >
+                    {authMode === "signup" ? "Sign in" : "Create one"}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
