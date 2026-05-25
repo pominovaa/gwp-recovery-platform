@@ -29,6 +29,7 @@
     "typescript": "^5.5.3"
   },
   "overrides": {
-    "resolve": "2.0.0-next.6"
+    "resolve": "2.0.0-next.6",
+    "es-object-atoms": "1.1.1"
   }
 }
