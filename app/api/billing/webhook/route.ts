@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import { getErrorMessage } from "@/lib/billing/errors";
 import { getStripe } from "@/lib/billing/stripe";
 import { supabaseAdmin } from "@/lib/supabase/server";
 
@@ -55,25 +56,30 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: message }, { status: 400 });
   }
 
-  if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
-    const userId = session.metadata?.supabase_user_id;
-    const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id;
+  try {
+    if (event.type === "checkout.session.completed") {
+      const session = event.data.object as Stripe.Checkout.Session;
+      const userId = session.metadata?.supabase_user_id;
+      const customerId = typeof session.customer === "string" ? session.customer : session.customer?.id;
 
-    if (userId && customerId) {
-      await supabaseAdmin
-        .from("profiles")
-        .update({ stripe_customer_id: customerId, updated_at: new Date().toISOString() })
-        .eq("id", userId);
+      if (userId && customerId) {
+        await supabaseAdmin
+          .from("profiles")
+          .update({ stripe_customer_id: customerId, updated_at: new Date().toISOString() })
+          .eq("id", userId);
+      }
     }
-  }
 
-  if (
-    event.type === "customer.subscription.created" ||
-    event.type === "customer.subscription.updated" ||
-    event.type === "customer.subscription.deleted"
-  ) {
-    await upsertSubscription(event.data.object as Stripe.Subscription);
+    if (
+      event.type === "customer.subscription.created" ||
+      event.type === "customer.subscription.updated" ||
+      event.type === "customer.subscription.deleted"
+    ) {
+      await upsertSubscription(event.data.object as Stripe.Subscription);
+    }
+  } catch (error) {
+    console.error("Billing webhook sync failed", error);
+    return NextResponse.json({ error: getErrorMessage(error, "Webhook received, but billing sync failed.") }, { status: 500 });
   }
 
   return NextResponse.json({ received: true });
