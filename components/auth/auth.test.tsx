@@ -58,6 +58,15 @@ describe("auth components", () => {
     expect(html).toContain("Sign out");
   });
 
+  it("renders account panel loading and error states", () => {
+    const html = renderToStaticMarkup(
+      <AccountPanel authError="Unable to sign out" authLoading email="alex@example.com" onSignOut={noop} />
+    );
+
+    expect(html).toContain("Unable to sign out");
+    expect(html).toContain("Signing out...");
+  });
+
   it("renders auth dialog form when signed out", () => {
     const html = renderToStaticMarkup(
       <AuthDialog
@@ -81,6 +90,30 @@ describe("auth components", () => {
 
     expect(html).toContain("Private Profile");
     expect(html).toContain("Sign In");
+  });
+
+  it("renders create account dialog title", () => {
+    const html = renderToStaticMarkup(
+      <AuthDialog
+        authEmail=""
+        authError=""
+        authLoading={false}
+        authMessage=""
+        authMode="signup"
+        authPassword=""
+        onAuthModeChange={noop}
+        onClose={noop}
+        onEmailChange={noop}
+        onPasswordChange={noop}
+        onSignOut={noop}
+        onSubmit={noop}
+        open
+        profileInitials="OA"
+        session={null}
+      />
+    );
+
+    expect(html).toContain("Create Account");
   });
 
   it("renders account management when signed in", () => {
