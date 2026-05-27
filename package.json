@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "test": "vitest run",
     "start": "next start",
     "lint": "next lint"
   },
@@ -27,7 +28,8 @@
     "eslint-config-next": "^16.2.6",
     "postcss": "^8.4.39",
     "tailwindcss": "^3.4.4",
-    "typescript": "^5.5.3"
+    "typescript": "^5.5.3",
+    "vitest": "^4.1.7"
   },
   "overrides": {
     "resolve": "2.0.0-next.6",
