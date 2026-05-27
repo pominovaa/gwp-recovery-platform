@@ -6,6 +6,7 @@ create extension if not exists "pgcrypto";
 create table if not exists public.profiles (
   id uuid primary key references auth.users(id) on delete cascade,
   display_initials text,
+  stripe_customer_id text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
@@ -19,8 +20,24 @@ create table if not exists public.journal_entries (
   updated_at timestamptz not null default now()
 );
 
+alter table public.profiles
+add column if not exists stripe_customer_id text;
+
+create table if not exists public.subscriptions (
+  id text primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  stripe_customer_id text not null,
+  plan_id text,
+  status text not null,
+  current_period_end timestamptz,
+  cancel_at_period_end boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 alter table public.profiles enable row level security;
 alter table public.journal_entries enable row level security;
+alter table public.subscriptions enable row level security;
 
 create policy "Users can read their own profile"
 on public.profiles for select
@@ -48,6 +65,10 @@ using (auth.uid() = user_id);
 
 create policy "Users can delete their own journal entries"
 on public.journal_entries for delete
+using (auth.uid() = user_id);
+
+create policy "Users can read their own subscriptions"
+on public.subscriptions for select
 using (auth.uid() = user_id);
 
 create or replace function public.handle_new_user()
