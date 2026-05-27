@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { resolveCheckoutPriceId } from "@/lib/billing/checkout";
 import { getBillingPlan, getPlanPriceId, type BillingPlanId } from "@/lib/billing/plans";
 import { getStripe } from "@/lib/billing/stripe";
 import { supabaseAdmin } from "@/lib/supabase/server";
@@ -44,28 +45,7 @@ export async function POST(request: NextRequest) {
     }
 
     const stripe = getStripe();
-    let checkoutPriceId = priceId;
-
-    if (priceId.startsWith("prod_")) {
-      const product = await stripe.products.retrieve(priceId);
-      const defaultPrice = product.default_price;
-
-      if (!defaultPrice) {
-        return NextResponse.json(
-          { error: "This Stripe product does not have a default price. Add a recurring price in Stripe or use a price_ ID." },
-          { status: 500 }
-        );
-      }
-
-      checkoutPriceId = typeof defaultPrice === "string" ? defaultPrice : defaultPrice.id;
-    }
-
-    if (!checkoutPriceId.startsWith("price_")) {
-      return NextResponse.json(
-        { error: "Stripe plan IDs must be price_ IDs, or prod_ IDs with a default price." },
-        { status: 500 }
-      );
-    }
+    const checkoutPriceId = await resolveCheckoutPriceId(stripe, priceId);
 
     const { data: profile } = await supabaseAdmin
       .from("profiles")
