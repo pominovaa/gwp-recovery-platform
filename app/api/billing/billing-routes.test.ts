@@ -75,6 +75,31 @@ describe("billing API routes", () => {
     await expect(response.json()).resolves.toEqual({ url: "https://checkout.stripe.test/session" });
   });
 
+  it("checkout creates and stores a Stripe customer when missing", async () => {
+    vi.mocked(supabaseAdmin.auth.getUser).mockResolvedValueOnce({
+      data: { user: { id: "user_1", email: "alex@example.com" } },
+      error: null,
+    });
+    const query = createSupabaseQuery(null);
+    vi.mocked(supabaseAdmin.from).mockReturnValue(query);
+    vi.mocked(getStripe).mockReturnValue({
+      customers: {
+        create: vi.fn(async () => ({ id: "cus_new" })),
+      },
+      checkout: {
+        sessions: {
+          create: vi.fn(async () => ({ url: "https://checkout.stripe.test/session" })),
+        },
+      },
+    } as any);
+    const { POST } = await import("@/app/api/billing/checkout/route");
+
+    const response = await POST(createRequest({ planId: "light" }));
+
+    expect(response.status).toBe(200);
+    expect(query.update).toHaveBeenCalledWith(expect.objectContaining({ stripe_customer_id: "cus_new" }));
+  });
+
   it("checkout resolves product IDs before creating a Stripe session", async () => {
     vi.stubEnv("STRIPE_LIGHT_PRICE_ID", "prod_light_test");
     vi.mocked(supabaseAdmin.auth.getUser).mockResolvedValueOnce({

@@ -16,6 +16,12 @@ export default defineConfig({
       reporter: ["text", "json-summary"],
       include: ["app/**/*.{ts,tsx}", "components/**/*.{ts,tsx}", "lib/**/*.{ts,tsx}"],
       exclude: ["**/*.test.{ts,tsx}"],
+      thresholds: {
+        statements: 90,
+        branches: 80,
+        functions: 90,
+        lines: 90,
+      },
     },
     environment: "node",
     globals: true,
