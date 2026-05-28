@@ -2,6 +2,7 @@ import { CircleDollarSign, Lock } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { PricingCard } from "@/components/find-support/pricing-card";
 import { tiers } from "@/components/find-support/tiers";
+import { designSystem } from "@/lib/design-system";
 
 function SectionTitle({ eyebrow, title, children }: { eyebrow: string; title: string; children?: React.ReactNode }) {
   return (
@@ -29,7 +30,7 @@ export function FindSupportContent() {
 
       <section className="px-5 pb-24">
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[1fr_1fr]">
-          <Card className="rounded-[2rem] border-stone-200 bg-white shadow-sm">
+          <Card className={designSystem.components.card.info}>
             <CardContent className="p-7">
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-stone-100 text-stone-900">
                 <Lock className="h-6 w-6" />
@@ -40,7 +41,7 @@ export function FindSupportContent() {
               </p>
             </CardContent>
           </Card>
-          <Card className="rounded-[2rem] border-stone-200 bg-white shadow-sm">
+          <Card className={designSystem.components.card.info}>
             <CardContent className="p-7">
               <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-stone-100 text-stone-900">
                 <CircleDollarSign className="h-6 w-6" />
