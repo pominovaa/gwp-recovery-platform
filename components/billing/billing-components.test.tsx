@@ -16,11 +16,16 @@ describe("billing components", () => {
         Start family plan preview
       </CheckoutButton>
     );
+    const className =
+      Array.from(html.matchAll(/class="([^"]+)"/g))
+        .map((match) => match[1])
+        .find((classes) => classes.includes("bg-emerald-700")) ?? "";
 
     expect(html).toContain("min-h-11");
     expect(html).toContain("h-auto");
     expect(html).toContain("w-full");
-    expect(html).toContain("whitespace-normal");
+    expect(className.split(" ")).toContain("!whitespace-normal");
+    expect(className.split(" ")).not.toContain("whitespace-normal");
     expect(html).toContain("bg-emerald-700");
   });
 

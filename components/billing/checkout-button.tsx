@@ -67,7 +67,7 @@ export function CheckoutButton({ children, className = "", planId }: CheckoutBut
         type="button"
         onClick={startCheckout}
         disabled={loading}
-        className={["min-h-11 h-auto w-full whitespace-normal px-4 py-3 text-center leading-5", className]
+        className={["min-h-11 h-auto w-full !whitespace-normal px-4 py-3 text-center leading-5", className]
           .filter(Boolean)
           .join(" ")}
       >
