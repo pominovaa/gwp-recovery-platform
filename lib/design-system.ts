@@ -73,8 +73,8 @@ export const designSystem = {
     },
     card: {
       base: "",
-      info: "rounded-gwp border border-stone-200 bg-white shadow-sm",
-      pricing: "rounded-gwp border shadow-sm",
+      info: "rounded-lg border border-stone-200 bg-white shadow-sm",
+      pricing: "rounded-lg border shadow-sm",
       surface: "rounded-gwp-lg border border-stone-200 bg-white text-stone-950 shadow-sm"
     },
     dialog: {

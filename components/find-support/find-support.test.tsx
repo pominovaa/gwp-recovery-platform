@@ -25,7 +25,8 @@ describe("find support components", () => {
   it("uses the shared card radius for pricing cards", () => {
     const html = renderToStaticMarkup(<PricingCard tier={tiers[1]} />);
 
-    expect(html).toContain("rounded-gwp");
+    expect(html).toContain("rounded-lg");
+    expect(html).not.toContain("rounded-gwp");
     expect(html).not.toContain("rounded-[2rem]");
   });
 
