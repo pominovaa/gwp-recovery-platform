@@ -72,10 +72,10 @@ export const designSystem = {
       }
     },
     card: {
-      base: "",
-      info: "rounded-lg border border-stone-200 bg-white shadow-sm",
-      pricing: "rounded-lg border shadow-sm",
-      surface: "rounded-gwp-lg border border-stone-200 bg-white text-stone-950 shadow-sm"
+      base: "rounded-lg border",
+      info: "border-stone-200 bg-white shadow-sm",
+      pricing: "shadow-sm",
+      surface: "rounded-gwp-lg border-stone-200 bg-white text-stone-950 shadow-sm"
     },
     dialog: {
       overlay: "fixed inset-0 z-[60] overflow-y-auto bg-white",

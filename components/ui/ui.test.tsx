@@ -33,6 +33,8 @@ describe("ui primitives", () => {
     );
 
     expect(html).toContain("Card body");
+    expect(html).toContain("rounded-lg");
+    expect(html).toContain("border");
   });
 
   it("renders the customize icon", () => {
