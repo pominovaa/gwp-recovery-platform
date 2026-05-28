@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { supabaseAdmin } from "@/lib/supabase/server";
 import { getStripe } from "@/lib/billing/stripe";
+import { CHECKOUT_UNAVAILABLE_MESSAGE } from "@/lib/billing/errors";
 
 vi.mock("@/lib/billing/stripe", () => ({
   getStripe: vi.fn(),
@@ -128,7 +129,21 @@ describe("billing API routes", () => {
     }));
   });
 
-  it("checkout returns a clean error when Stripe fails", async () => {
+  it("checkout returns a user-safe error when a plan price is not configured", async () => {
+    vi.stubEnv("STRIPE_LIGHT_PRICE_ID", "");
+    vi.mocked(supabaseAdmin.auth.getUser).mockResolvedValueOnce({
+      data: { user: { id: "user_1", email: "alex@example.com" } },
+      error: null,
+    });
+    const { POST } = await import("@/app/api/billing/checkout/route");
+
+    const response = await POST(createRequest({ planId: "light" }));
+
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toEqual({ error: CHECKOUT_UNAVAILABLE_MESSAGE });
+  });
+
+  it("checkout returns a user-safe error when Stripe fails", async () => {
     vi.mocked(supabaseAdmin.auth.getUser).mockResolvedValueOnce({
       data: { user: { id: "user_1", email: "alex@example.com" } },
       error: null,
@@ -147,8 +162,8 @@ describe("billing API routes", () => {
 
     const response = await POST(createRequest({ planId: "light" }));
 
-    expect(response.status).toBe(500);
-    await expect(response.json()).resolves.toEqual({ error: "Stripe unavailable" });
+    expect(response.status).toBe(503);
+    await expect(response.json()).resolves.toEqual({ error: CHECKOUT_UNAVAILABLE_MESSAGE });
   });
 
   it("portal returns 401 without a bearer token", async () => {

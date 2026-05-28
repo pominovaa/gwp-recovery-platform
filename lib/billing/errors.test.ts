@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { getErrorMessage, readJsonResponse } from "@/lib/billing/errors";
+import { CHECKOUT_UNAVAILABLE_MESSAGE, getErrorMessage, readJsonResponse } from "@/lib/billing/errors";
 
 describe("billing error helpers", () => {
   it("uses an Error message when available", () => {
@@ -12,6 +12,12 @@ describe("billing error helpers", () => {
 
   it("supports a custom fallback", () => {
     expect(getErrorMessage(null, "Try again later.")).toBe("Try again later.");
+  });
+
+  it("uses user-safe checkout unavailable copy", () => {
+    expect(CHECKOUT_UNAVAILABLE_MESSAGE).toBe(
+      "This feature is currently in testing and will be available soon. Please try again later."
+    );
   });
 
   it("reads valid JSON responses", async () => {

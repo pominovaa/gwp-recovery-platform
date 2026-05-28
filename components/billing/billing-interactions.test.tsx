@@ -6,6 +6,7 @@ import userEvent from "@testing-library/user-event";
 import { CheckoutButton } from "@/components/billing/checkout-button";
 import { BillingPortalButton } from "@/components/billing/billing-portal-button";
 import { supabaseBrowser } from "@/lib/supabase/browser";
+import { CHECKOUT_UNAVAILABLE_MESSAGE } from "@/lib/billing/errors";
 
 describe("billing interactions", () => {
   beforeEach(() => {
@@ -35,7 +36,7 @@ describe("billing interactions", () => {
     render(<CheckoutButton planId="plus">Start plus preview</CheckoutButton>);
     await userEvent.click(screen.getByRole("button", { name: "Start plus preview" }));
 
-    expect(await screen.findByText("Stripe is unavailable")).toBeTruthy();
+    expect(await screen.findByText(CHECKOUT_UNAVAILABLE_MESSAGE)).toBeTruthy();
   });
 
   it("shows a generic checkout error when fetch throws", async () => {
@@ -48,7 +49,7 @@ describe("billing interactions", () => {
     render(<CheckoutButton planId="family">Start family plan preview</CheckoutButton>);
     await userEvent.click(screen.getByRole("button", { name: "Start family plan preview" }));
 
-    expect(await screen.findByText("Checkout is temporarily unavailable. Please try again in a moment.")).toBeTruthy();
+    expect(await screen.findByText(CHECKOUT_UNAVAILABLE_MESSAGE)).toBeTruthy();
   });
 
   it("does not call checkout APIs for the free help button", async () => {
