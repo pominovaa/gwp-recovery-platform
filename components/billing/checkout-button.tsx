@@ -5,14 +5,16 @@ import { supabaseBrowser } from "@/lib/supabase/browser";
 import { Button } from "@/components/ui/button";
 import { CHECKOUT_UNAVAILABLE_MESSAGE, readJsonResponse } from "@/lib/billing/errors";
 import type { BillingPlanId } from "@/lib/billing/plans";
+import type { ButtonVariant } from "@/lib/design-system";
 
 type CheckoutButtonProps = {
   children: React.ReactNode;
   className?: string;
   planId?: BillingPlanId;
+  variant?: ButtonVariant;
 };
 
-export function CheckoutButton({ children, className = "", planId }: CheckoutButtonProps) {
+export function CheckoutButton({ children, className = "", planId, variant = "default" }: CheckoutButtonProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -69,6 +71,7 @@ export function CheckoutButton({ children, className = "", planId }: CheckoutBut
         type="button"
         onClick={startCheckout}
         disabled={loading}
+        variant={variant}
         className={["min-h-11 h-auto w-full !whitespace-normal px-4 py-3 text-center leading-5", className]
           .filter(Boolean)
           .join(" ")}

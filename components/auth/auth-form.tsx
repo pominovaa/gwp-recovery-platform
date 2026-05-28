@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ErrorState, LoadingState } from "@/components/ui/feedback-state";
 import { FormField, textInputClasses } from "@/components/ui/form-field";
+import { cn, designSystem } from "@/lib/design-system";
 
 type AuthFormProps = {
   authEmail: string;
@@ -31,7 +32,7 @@ export function AuthForm({
   onSubmit,
 }: AuthFormProps) {
   return (
-    <Card className="mx-auto max-w-xl">
+    <Card className={cn(designSystem.components.card.surface, "mx-auto max-w-xl")}>
       <CardContent className="p-6 md:p-8">
         <form onSubmit={onSubmit} className="space-y-5">
           <FormField id="auth-email" label="Email">

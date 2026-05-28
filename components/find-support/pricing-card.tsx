@@ -35,7 +35,7 @@ export function PricingCard({ tier }: PricingCardProps) {
             </div>
           ))}
         </div>
-        <CheckoutButton planId={tier.planId} className={`mt-auto h-11 rounded-full ${tier.featured ? "bg-white text-stone-950 hover:bg-stone-100" : "bg-stone-950 text-white hover:bg-stone-800"}`}>
+        <CheckoutButton planId={tier.planId} variant={tier.featured ? "inverse" : "default"} className="mt-auto h-11 rounded-full">
           {tier.cta}
         </CheckoutButton>
       </CardContent>

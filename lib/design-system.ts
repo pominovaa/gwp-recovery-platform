@@ -65,13 +65,15 @@ export const designSystem = {
       },
       variants: {
         default: "bg-stone-950 text-white hover:bg-stone-800",
+        inverse: "bg-white text-stone-950 hover:bg-stone-100",
         outline: "border border-stone-300 bg-white text-stone-950 hover:bg-stone-50",
         ghost: "bg-transparent text-stone-950 hover:bg-stone-100",
         danger: "bg-rose-700 text-white hover:bg-rose-800"
       }
     },
     card: {
-      base: "rounded-gwp-lg border border-stone-200 bg-white text-stone-950 shadow-sm"
+      base: "",
+      surface: "rounded-gwp-lg border border-stone-200 bg-white text-stone-950 shadow-sm"
     },
     dialog: {
       overlay: "fixed inset-0 z-[60] overflow-y-auto bg-white",
