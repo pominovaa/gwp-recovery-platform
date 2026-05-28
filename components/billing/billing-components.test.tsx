@@ -10,6 +10,25 @@ describe("billing components", () => {
     expect(html).toContain("Start light plan");
   });
 
+  it("renders checkout buttons with wrapping-safe layout classes", () => {
+    const html = renderToStaticMarkup(
+      <CheckoutButton planId="family" className="bg-emerald-700">
+        Start family plan preview
+      </CheckoutButton>
+    );
+    const className =
+      Array.from(html.matchAll(/class="([^"]+)"/g))
+        .map((match) => match[1])
+        .find((classes) => classes.includes("bg-emerald-700")) ?? "";
+
+    expect(html).toContain("min-h-11");
+    expect(html).toContain("h-auto");
+    expect(html).toContain("w-full");
+    expect(className.split(" ")).toContain("!whitespace-normal");
+    expect(className.split(" ")).not.toContain("whitespace-normal");
+    expect(html).toContain("bg-emerald-700");
+  });
+
   it("renders free-plan checkout button label", () => {
     const html = renderToStaticMarkup(<CheckoutButton>Get help now</CheckoutButton>);
 

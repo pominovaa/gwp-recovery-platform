@@ -63,7 +63,14 @@ export function CheckoutButton({ children, className = "", planId }: CheckoutBut
 
   return (
     <div className="mt-auto">
-      <Button type="button" onClick={startCheckout} disabled={loading} className={className}>
+      <Button
+        type="button"
+        onClick={startCheckout}
+        disabled={loading}
+        className={["min-h-11 h-auto w-full !whitespace-normal px-4 py-3 text-center leading-5", className]
+          .filter(Boolean)
+          .join(" ")}
+      >
         {loading ? "Opening checkout..." : children}
       </Button>
       {error && <p className="mt-3 text-sm leading-6 text-rose-700">{error}</p>}
