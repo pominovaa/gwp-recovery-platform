@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { CustomizeIcon } from "@/components/ui/customize-icon";
+import { SectionHeader } from "@/components/ui/headers";
+import { TooltipIconButton } from "@/components/ui/tooltip-icon-button";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteNav } from "@/components/layout/site-nav";
 
@@ -51,16 +53,6 @@ const moderationRules = [
 
 function Pill({ children }) {
   return <span className="text-sm font-semibold text-stone-700">{children}</span>;
-}
-
-function SectionTitle({ eyebrow, title, children }) {
-  return (
-    <div className="mx-auto mb-10 max-w-3xl text-center">
-      <div className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-stone-500">{eyebrow}</div>
-      <h2 className="text-3xl font-semibold tracking-tight text-stone-950 md:text-5xl">{title}</h2>
-      {children && <p className="mt-5 text-lg leading-8 text-stone-600">{children}</p>}
-    </div>
-  );
 }
 
 function FeatureCard({ icon: Icon, title, children }) {
@@ -132,18 +124,13 @@ export default function GetWholeProjectPrototype() {
                         Affirmation: I can take this one moment at a time.
                       </p>
                     </div>
-                    <div className="group relative inline-flex">
-                      <a
-                        href="/find-support"
-                        aria-label="Customize today's affirmation and checklist"
-                        className="flex h-8 w-8 items-center justify-center rounded-full border border-white/20 bg-white/10 text-xs font-semibold text-white transition hover:bg-white/15"
-                      >
-                        <CustomizeIcon />
-                      </a>
-                      <div className="pointer-events-none absolute right-0 top-full mt-2 w-48 rounded-2xl bg-white px-3 py-2 text-xs leading-5 text-stone-800 opacity-0 shadow-lg transition group-hover:opacity-100">
-                        Upgrade to customize today’s affirmation and checklist.
-                      </div>
-                    </div>
+                    <TooltipIconButton
+                      className="border-white/20 bg-white/10 text-white hover:bg-white/15"
+                      href="/find-support"
+                      icon={<CustomizeIcon />}
+                      label="Customize today's affirmation and checklist"
+                      tooltip="Upgrade to customize today's affirmation and checklist."
+                    />
                   </div>
 
                   <div className="space-y-3">
@@ -169,18 +156,12 @@ export default function GetWholeProjectPrototype() {
                         Breathe, name the fear, choose the next tiny step.
                       </div>
                     </div>
-                    <div className="group relative inline-flex">
-                      <a
-                        href="/find-support"
-                        aria-label="Customize reset cards"
-                        className="flex h-8 w-8 items-center justify-center rounded-full border border-stone-200 bg-white text-xs font-semibold text-stone-700 shadow-sm transition hover:bg-stone-50"
-                      >
-                        <CustomizeIcon />
-                      </a>
-                      <div className="pointer-events-none absolute right-0 top-full z-10 mt-2 w-44 rounded-2xl bg-stone-950 px-3 py-2 text-xs leading-5 text-white opacity-0 shadow-lg transition group-hover:opacity-100">
-                        Upgrade to customize reset cards.
-                      </div>
-                    </div>
+                    <TooltipIconButton
+                      href="/find-support"
+                      icon={<CustomizeIcon />}
+                      label="Customize reset cards"
+                      tooltip="Upgrade to customize reset cards."
+                    />
                   </div>
                 </div>
                 <div className="mt-4 rounded-[2rem] bg-stone-50 p-5">
@@ -189,18 +170,12 @@ export default function GetWholeProjectPrototype() {
                       <MessageCircleHeart className="h-5 w-5 text-stone-700" />
                       <div className="font-semibold">Journal Prompt</div>
                     </div>
-                    <div className="group relative inline-flex">
-                      <a
-                        href="/find-support"
-                        aria-label="Customize journal prompts"
-                        className="flex h-8 w-8 items-center justify-center rounded-full border border-stone-200 bg-white text-xs font-semibold text-stone-700 shadow-sm transition hover:bg-stone-50"
-                      >
-                        <CustomizeIcon />
-                      </a>
-                      <div className="pointer-events-none absolute right-0 top-full z-10 mt-2 w-44 rounded-2xl bg-stone-950 px-3 py-2 text-xs leading-5 text-white opacity-0 shadow-lg transition group-hover:opacity-100">
-                        Upgrade to customize journal prompts.
-                      </div>
-                    </div>
+                    <TooltipIconButton
+                      href="/find-support"
+                      icon={<CustomizeIcon />}
+                      label="Customize journal prompts"
+                      tooltip="Upgrade to customize journal prompts."
+                    />
                   </div>
                   <select
                     value={selectedPrompt}
@@ -249,9 +224,9 @@ export default function GetWholeProjectPrototype() {
         </section>
 
         <section id="heal" className="px-5 py-20">
-          <SectionTitle eyebrow="Heal" title="Support for the hard days.">
+          <SectionHeader eyebrow="Heal" title="Support for the hard days.">
             Practical tools for moments when recovery feels loud: coping cards, meal-support reflections, treatment notes, and private journaling without triggering metrics.
-          </SectionTitle>
+          </SectionHeader>
           <div className="mx-auto grid max-w-7xl gap-5 md:grid-cols-3">
             <FeatureCard icon={Heart} title="Meal Support Reflection">
               Reflect on distress, emotions, support used, and what helped — without calories, weight, portions, or comparison.
@@ -266,9 +241,9 @@ export default function GetWholeProjectPrototype() {
         </section>
 
         <section id="live" className="bg-stone-950 px-5 py-20 text-white">
-          <SectionTitle eyebrow="Live" title="Recovery is not only about symptoms.">
+          <SectionHeader eyebrow="Live" title="Recovery is not only about symptoms." tone="dark">
             It is also about school, family, identity, confidence, routines, and feeling like life can become yours again.
-          </SectionTitle>
+          </SectionHeader>
           <div className="mx-auto grid max-w-7xl gap-5 md:grid-cols-4">
             {[
               [Home, "School & routine", "Return-to-school notes, accommodations, and daily structure."],
@@ -286,9 +261,9 @@ export default function GetWholeProjectPrototype() {
         </section>
 
         <section id="give" className="px-5 py-20">
-          <SectionTitle eyebrow="Give" title="Stories that give hope forward.">
+          <SectionHeader eyebrow="Give" title="Stories that give hope forward.">
             Users can submit anonymous recovery stories, but stories are moderated before publishing to protect privacy and reduce harm.
-          </SectionTitle>
+          </SectionHeader>
           <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[1fr_0.9fr]">
             <div className="grid gap-5 md:grid-cols-3">
               {stories.map((story) => (

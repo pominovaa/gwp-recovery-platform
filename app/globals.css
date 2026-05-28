@@ -5,6 +5,12 @@
 :root {
   --background: #f7faf8;
   --foreground: #15201f;
+  --primary: #15201f;
+  --primary-foreground: #ffffff;
+  --surface: #ffffff;
+  --surface-muted: #f3f7f4;
+  --border: #dfe7e2;
+  --muted-text: #586662;
 }
 
 * {
@@ -41,4 +47,9 @@ select {
 
 ::selection {
   background: rgba(20, 132, 109, 0.2);
+}
+
+:focus-visible {
+  outline: 3px solid rgba(17, 120, 99, 0.55);
+  outline-offset: 3px;
 }

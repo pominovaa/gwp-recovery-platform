@@ -1,6 +1,7 @@
 import { Check, Eye, Sparkles } from "lucide-react";
 import { CheckoutButton } from "@/components/billing/checkout-button";
 import { Card, CardContent } from "@/components/ui/card";
+import { cn, designSystem } from "@/lib/design-system";
 import type { BillingPlanId } from "@/lib/billing/plans";
 
 type PricingCardProps = {
@@ -18,7 +19,12 @@ type PricingCardProps = {
 
 export function PricingCard({ tier }: PricingCardProps) {
   return (
-    <Card className={`rounded-[2rem] border shadow-sm ${tier.featured ? "border-stone-950 bg-stone-950 text-white" : "border-stone-200 bg-white"}`}>
+    <Card
+      className={cn(
+        designSystem.components.card.pricing,
+        tier.featured ? "border-stone-950 bg-stone-950 text-white" : "border-stone-200 bg-white"
+      )}
+    >
       <CardContent className="flex h-full flex-col p-7">
         <div className="mb-5 flex items-center justify-between">
           <h3 className="text-2xl font-semibold">{tier.name}</h3>
@@ -35,7 +41,7 @@ export function PricingCard({ tier }: PricingCardProps) {
             </div>
           ))}
         </div>
-        <CheckoutButton planId={tier.planId} className={`mt-auto h-11 rounded-full ${tier.featured ? "bg-white text-stone-950 hover:bg-stone-100" : "bg-stone-950 text-white hover:bg-stone-800"}`}>
+        <CheckoutButton planId={tier.planId} variant={tier.featured ? "inverse" : "default"} className="mt-auto h-11 rounded-full">
           {tier.cta}
         </CheckoutButton>
       </CardContent>
