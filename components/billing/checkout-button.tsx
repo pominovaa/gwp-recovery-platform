@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { supabaseBrowser } from "@/lib/supabase/browser";
 import { Button } from "@/components/ui/button";
-import { readJsonResponse } from "@/lib/billing/errors";
+import { CHECKOUT_UNAVAILABLE_MESSAGE, readJsonResponse } from "@/lib/billing/errors";
 import type { BillingPlanId } from "@/lib/billing/plans";
 
 type CheckoutButtonProps = {
@@ -49,14 +49,16 @@ export function CheckoutButton({ children, className = "", planId }: CheckoutBut
       const data = await readJsonResponse(response);
 
       if (!response.ok || !data?.url) {
-        setError(data?.error || "Unable to start checkout. Please try again.");
+        setError(
+          response.status >= 500 ? CHECKOUT_UNAVAILABLE_MESSAGE : data?.error || "Unable to start checkout. Please try again."
+        );
         setLoading(false);
         return;
       }
 
       window.location.href = data.url;
     } catch {
-      setError("Checkout is temporarily unavailable. Please try again in a moment.");
+      setError(CHECKOUT_UNAVAILABLE_MESSAGE);
       setLoading(false);
     }
   }

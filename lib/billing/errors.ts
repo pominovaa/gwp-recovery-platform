@@ -1,3 +1,6 @@
+export const CHECKOUT_UNAVAILABLE_MESSAGE =
+  "This feature is currently in testing and will be available soon. Please try again later.";
+
 export function getErrorMessage(error: unknown, fallback = "Billing is temporarily unavailable. Please try again in a moment.") {
   if (error instanceof Error && error.message) {
     return error.message;

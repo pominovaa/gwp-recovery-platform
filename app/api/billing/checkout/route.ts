@@ -3,7 +3,7 @@ import { resolveCheckoutPriceId } from "@/lib/billing/checkout";
 import { getBillingPlan, getPlanPriceId, type BillingPlanId } from "@/lib/billing/plans";
 import { getStripe } from "@/lib/billing/stripe";
 import { supabaseAdmin } from "@/lib/supabase/server";
-import { getErrorMessage } from "@/lib/billing/errors";
+import { CHECKOUT_UNAVAILABLE_MESSAGE } from "@/lib/billing/errors";
 
 export const runtime = "nodejs";
 
@@ -41,7 +41,8 @@ export async function POST(request: NextRequest) {
     const priceId = getPlanPriceId(planId as BillingPlanId);
 
     if (!priceId) {
-      return NextResponse.json({ error: `Missing ${plan.envKey} in environment variables.` }, { status: 500 });
+      console.error(`Billing checkout is unavailable because ${plan.envKey} is not configured.`);
+      return NextResponse.json({ error: CHECKOUT_UNAVAILABLE_MESSAGE }, { status: 503 });
     }
 
     const stripe = getStripe();
@@ -93,6 +94,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ url: session.url });
   } catch (error) {
     console.error("Billing checkout failed", error);
-    return NextResponse.json({ error: getErrorMessage(error) }, { status: 500 });
+    return NextResponse.json({ error: CHECKOUT_UNAVAILABLE_MESSAGE }, { status: 503 });
   }
 }
