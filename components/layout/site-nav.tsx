@@ -30,6 +30,15 @@ export function SiteNav() {
   useEffect(() => {
     let mounted = true;
 
+    function resetAuthState() {
+      setSession(null);
+      setProfileInitials("OA");
+    }
+
+    function isInvalidRefreshToken(error) {
+      return error?.message?.toLowerCase().includes("invalid refresh token");
+    }
+
     async function loadProfileInitials(activeSession) {
       if (!activeSession?.user) {
         setProfileInitials("OA");
@@ -52,10 +61,27 @@ export function SiteNav() {
     }
 
     async function loadSession() {
-      const { data } = await supabaseBrowser.auth.getSession();
-      if (!mounted) return;
-      setSession(data.session);
-      await loadProfileInitials(data.session);
+      try {
+        const { data, error } = await supabaseBrowser.auth.getSession();
+        if (!mounted) return;
+
+        if (error) {
+          resetAuthState();
+          if (isInvalidRefreshToken(error)) {
+            await supabaseBrowser.auth.signOut({ scope: "local" });
+          }
+          return;
+        }
+
+        setSession(data.session);
+        await loadProfileInitials(data.session);
+      } catch (error) {
+        if (!mounted) return;
+        resetAuthState();
+        if (isInvalidRefreshToken(error)) {
+          await supabaseBrowser.auth.signOut({ scope: "local" }).catch(() => {});
+        }
+      }
     }
 
     loadSession();

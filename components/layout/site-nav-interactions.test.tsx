@@ -43,6 +43,20 @@ describe("site nav interactions", () => {
     expect(await screen.findByText("Private Profile")).toBeTruthy();
   });
 
+  it("clears a stale invalid refresh token during auth bootstrap", async () => {
+    vi.mocked(supabaseBrowser.auth.getSession).mockResolvedValueOnce({
+      data: { session: null },
+      error: { message: "Invalid Refresh Token: Refresh Token Not Found" },
+    });
+
+    render(<SiteNav />);
+
+    await waitFor(() => {
+      expect(supabaseBrowser.auth.signOut).toHaveBeenCalledWith({ scope: "local" });
+    });
+    expect(await screen.findByRole("button", { name: "Sign up / Log in" })).toBeTruthy();
+  });
+
   it("shows a sign-in error from Supabase", async () => {
     vi.mocked(supabaseBrowser.auth.signInWithPassword).mockResolvedValueOnce({
       data: { session: null },
