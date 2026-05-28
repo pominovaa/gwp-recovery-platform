@@ -1,5 +1,5 @@
 import * as React from "react";
-import { cn } from "@/lib/design-system/classnames";
+import { cn, designSystem } from "@/lib/design-system";
 
 type FormFieldProps = {
   children?: React.ReactNode;
@@ -11,15 +11,17 @@ type FormFieldProps = {
 };
 
 export function FormField({ children, className = "", error, helpText, id, label }: FormFieldProps) {
+  const form = designSystem.components.form;
+
   return (
-    <div className={cn("space-y-2", className)}>
-      <label className="block text-sm font-semibold text-stone-800" htmlFor={id}>
+    <div className={cn(form.field, className)}>
+      <label className={form.label} htmlFor={id}>
         {label}
       </label>
       {children}
-      {helpText && <p className="text-sm leading-6 text-stone-500">{helpText}</p>}
+      {helpText && <p className={form.helpText}>{helpText}</p>}
       {error && (
-        <p className="text-sm font-medium text-rose-700" id={`${id}-error`}>
+        <p className={form.errorText} id={`${id}-error`}>
           {error}
         </p>
       )}
@@ -28,8 +30,5 @@ export function FormField({ children, className = "", error, helpText, id, label
 }
 
 export function textInputClasses(className = "") {
-  return cn(
-    "h-12 w-full rounded-2xl border border-stone-200 bg-white px-4 text-sm outline-none transition focus:border-stone-500",
-    className
-  );
+  return cn(designSystem.components.form.input, className);
 }

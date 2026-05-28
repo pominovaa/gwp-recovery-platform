@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { X } from "lucide-react";
-import { cn } from "@/lib/design-system/classnames";
+import { cn, designSystem } from "@/lib/design-system";
 import { Button } from "@/components/ui/button";
 
 type DrawerProps = {
@@ -14,12 +14,13 @@ type DrawerProps = {
 
 export function Drawer({ children, labelledBy, onClose, open }: DrawerProps) {
   if (!open) return null;
+  const drawer = designSystem.components.drawer;
 
   return (
-    <div aria-labelledby={labelledBy} aria-modal="true" className="fixed inset-0 z-[60]" role="dialog">
-      <button aria-label="Close drawer" className="absolute inset-0 bg-stone-950/35" onClick={onClose} type="button" />
-      <aside className="absolute right-0 top-0 h-full w-full max-w-md overflow-y-auto bg-white p-6 shadow-raised">
-        <Button aria-label="Close drawer" className="mb-6 h-10 w-10 p-0" onClick={onClose} type="button" variant="outline">
+    <div aria-labelledby={labelledBy} aria-modal="true" className={drawer.root} role="dialog">
+      <button aria-label="Close drawer" className={drawer.backdrop} onClick={onClose} type="button" />
+      <aside className={drawer.panel}>
+        <Button aria-label="Close drawer" className={drawer.closeButton} onClick={onClose} type="button" variant="outline">
           <X aria-hidden="true" className="h-5 w-5" />
         </Button>
         {children}
@@ -29,5 +30,5 @@ export function Drawer({ children, labelledBy, onClose, open }: DrawerProps) {
 }
 
 export function DrawerHeader({ className = "", ...props }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={cn("mb-6 space-y-2", className)} {...props} />;
+  return <div className={cn(designSystem.components.drawer.header, className)} {...props} />;
 }
