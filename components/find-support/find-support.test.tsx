@@ -25,6 +25,20 @@ describe("find support components", () => {
     expect(html).toContain("Gift subscription");
   });
 
+  it("uses the shared card radius for pricing cards", () => {
+    const html = renderToStaticMarkup(<PricingCard tier={tiers[1]} />);
+
+    expect(html).toContain("rounded-lg");
+    expect(html).not.toContain("rounded-gwp");
+    expect(html).not.toContain("rounded-[2rem]");
+  });
+
+  it("does not use oversized card radii on the subscription page", () => {
+    const html = renderToStaticMarkup(<FindSupportContent />);
+
+    expect(html).not.toContain("rounded-[2rem]");
+  });
+
   it("renders the full find support page with navigation", () => {
     const html = renderToStaticMarkup(<FindSupportPage />);
 

@@ -1,6 +1,7 @@
 import { Check, Eye, Gift, Sparkles } from "lucide-react";
 import { CheckoutButton } from "@/components/billing/checkout-button";
 import { Card, CardContent } from "@/components/ui/card";
+import { cn, designSystem } from "@/lib/design-system";
 import type { BillingPlanId } from "@/lib/billing/plans";
 
 type PricingCardProps = {
@@ -18,7 +19,13 @@ type PricingCardProps = {
 
 export function PricingCard({ tier }: PricingCardProps) {
   return (
-    <Card className={`min-w-0 overflow-hidden rounded-[1.5rem] border shadow-sm sm:rounded-[2rem] ${tier.featured ? "border-stone-950 bg-stone-950 text-white" : "border-stone-200 bg-white"}`}>
+    <Card
+      className={cn(
+        designSystem.components.card.pricing,
+        "min-w-0 overflow-hidden",
+        tier.featured ? "border-stone-950 bg-stone-950 text-white" : "border-stone-200 bg-white"
+      )}
+    >
       <CardContent className="flex h-full min-w-0 flex-col p-5 sm:p-7">
         <div className="mb-5 flex min-w-0 items-center justify-between gap-3">
           <h3 className="min-w-0 break-words text-2xl font-semibold">{tier.name}</h3>
@@ -36,7 +43,7 @@ export function PricingCard({ tier }: PricingCardProps) {
           ))}
         </div>
         <div className="mt-auto space-y-3">
-          <CheckoutButton planId={tier.planId} className={`h-11 rounded-full ${tier.featured ? "bg-white text-stone-950 hover:bg-stone-100" : "bg-stone-950 text-white hover:bg-stone-800"}`}>
+          <CheckoutButton planId={tier.planId} variant={tier.featured ? "inverse" : "default"} className="h-11 rounded-full">
             {tier.cta}
           </CheckoutButton>
           {tier.planId && (

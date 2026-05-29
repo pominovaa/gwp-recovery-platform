@@ -10,5 +10,6 @@ describe("home prototype page", () => {
     expect(html).toContain("Heal. Live. Give.");
     expect(html).toContain("Get urgent help");
     expect(html).toContain("Support for the hard days.");
+    expect(html).toContain("border border-stone-200");
   });
 });

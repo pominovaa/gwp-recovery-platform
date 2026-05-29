@@ -8,7 +8,10 @@ describe("content pages", () => {
   });
 
   it("renders heal page", () => {
-    expect(renderToStaticMarkup(<HealPage />)).toContain("Support for the hard days.");
+    const html = renderToStaticMarkup(<HealPage />);
+
+    expect(html).toContain("Support for the hard days.");
+    expect(html).toContain("border border-stone-200");
   });
 
   it("renders live page", () => {
@@ -16,7 +19,10 @@ describe("content pages", () => {
   });
 
   it("renders give page", () => {
-    expect(renderToStaticMarkup(<GivePage />)).toContain("Stories that give hope forward.");
+    const html = renderToStaticMarkup(<GivePage />);
+
+    expect(html).toContain("Stories that give hope forward.");
+    expect(html).toContain("border border-stone-200");
   });
 
   it("renders stories page with videos and text stories", () => {
