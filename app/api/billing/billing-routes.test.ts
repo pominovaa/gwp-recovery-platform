@@ -61,10 +61,11 @@ describe("billing API routes", () => {
       error: null,
     });
     vi.mocked(supabaseAdmin.from).mockReturnValue(createSupabaseQuery({ stripe_customer_id: "cus_existing" }));
+    const createSession = vi.fn(async () => ({ url: "https://checkout.stripe.test/session" }));
     vi.mocked(getStripe).mockReturnValue({
       checkout: {
         sessions: {
-          create: vi.fn(async () => ({ url: "https://checkout.stripe.test/session" })),
+          create: createSession,
         },
       },
     } as any);
@@ -74,6 +75,11 @@ describe("billing API routes", () => {
 
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toEqual({ url: "https://checkout.stripe.test/session" });
+    expect(createSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({ checkout_kind: "subscription" }),
+      })
+    );
   });
 
   it("checkout creates and stores a Stripe customer when missing", async () => {
@@ -141,6 +147,82 @@ describe("billing API routes", () => {
 
     expect(response.status).toBe(503);
     await expect(response.json()).resolves.toEqual({ error: CHECKOUT_UNAVAILABLE_MESSAGE });
+  });
+
+  it("checkout marks gift subscriptions and asks for a recipient email", async () => {
+    vi.mocked(supabaseAdmin.auth.getUser).mockResolvedValueOnce({
+      data: { user: { id: "user_1", email: "alex@example.com" } },
+      error: null,
+    });
+    vi.mocked(supabaseAdmin.from).mockReturnValue(createSupabaseQuery({ stripe_customer_id: "cus_existing" }));
+    const createSession = vi.fn(async () => ({ url: "https://checkout.stripe.test/session" }));
+    vi.mocked(getStripe).mockReturnValue({
+      checkout: {
+        sessions: {
+          create: createSession,
+        },
+      },
+    } as any);
+    const { POST } = await import("@/app/api/billing/checkout/route");
+
+    const response = await POST(createRequest({ gift: true, planId: "light" }));
+
+    expect(response.status).toBe(200);
+    expect(createSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        custom_fields: [
+          expect.objectContaining({
+            key: "gift_recipient_email",
+            label: { custom: "Recipient email", type: "custom" },
+          }),
+        ],
+        metadata: expect.objectContaining({ checkout_kind: "gift_subscription" }),
+        success_url: expect.stringContaining("&gift=1"),
+      })
+    );
+  });
+
+  it("donation checkout uses an editable suggested amount in Stripe", async () => {
+    const createPrice = vi.fn(async () => ({ id: "price_donation" }));
+    const createSession = vi.fn(async () => ({ url: "https://checkout.stripe.test/donation" }));
+    vi.mocked(getStripe).mockReturnValue({
+      prices: {
+        create: createPrice,
+      },
+      checkout: {
+        sessions: {
+          create: createSession,
+        },
+      },
+    } as any);
+    const { POST } = await import("@/app/api/billing/donation/route");
+
+    const response = await POST(createRequest({}));
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ url: "https://checkout.stripe.test/donation" });
+    expect(createPrice).toHaveBeenCalledWith({
+      currency: "usd",
+      custom_unit_amount: {
+        enabled: true,
+        minimum: 100,
+        preset: 10000,
+      },
+      product_data: {
+        name: "Get Whole Project donation",
+      },
+    });
+    expect(createSession).toHaveBeenCalledWith(
+      expect.objectContaining({
+        line_items: [
+          expect.objectContaining({
+            price: "price_donation",
+          }),
+        ],
+        metadata: { checkout_kind: "donation" },
+        mode: "payment",
+      })
+    );
   });
 
   it("checkout returns a user-safe error when Stripe fails", async () => {

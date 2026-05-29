@@ -10,11 +10,12 @@ import type { ButtonVariant } from "@/lib/design-system";
 type CheckoutButtonProps = {
   children: React.ReactNode;
   className?: string;
+  gift?: boolean;
   planId?: BillingPlanId;
   variant?: ButtonVariant;
 };
 
-export function CheckoutButton({ children, className = "", planId, variant = "default" }: CheckoutButtonProps) {
+export function CheckoutButton({ children, className = "", gift = false, planId, variant = "default" }: CheckoutButtonProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -34,7 +35,7 @@ export function CheckoutButton({ children, className = "", planId, variant = "de
       } = await supabaseBrowser.auth.getSession();
 
       if (!session?.access_token) {
-        setError("Please sign up or log in before starting a paid plan.");
+        setError("Please sign up or log in before checkout.");
         setLoading(false);
         return;
       }
@@ -45,7 +46,7 @@ export function CheckoutButton({ children, className = "", planId, variant = "de
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ planId }),
+        body: JSON.stringify({ gift, planId }),
       });
 
       const data = await readJsonResponse(response);
