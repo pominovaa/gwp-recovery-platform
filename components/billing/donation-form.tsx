@@ -36,8 +36,8 @@ export function DonationForm() {
   }
 
   return (
-    <div className="mx-auto mt-6 max-w-4xl text-center">
-      <p className="text-sm leading-6 text-stone-600">
+    <div className="mx-auto mt-6 max-w-4xl min-w-0 text-center">
+      <p className="break-words text-sm leading-6 text-stone-600">
         Donations help pay for cloud resources, hosting, storage, and monitoring so GWP can stay live and available.
       </p>
       <div className="mt-4">

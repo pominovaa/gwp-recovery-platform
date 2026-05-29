@@ -5,14 +5,14 @@ export default function Page() {
   return (
     <div className="min-h-screen bg-[linear-gradient(180deg,#fffaf4_0%,#ffffff_48%,#f7f7f5_100%)] text-stone-950">
       <SiteNav />
-      <main className="px-5 py-20">
-        <section className="mx-auto max-w-3xl rounded-[2rem] border border-stone-200 bg-white p-8 text-center shadow-sm">
-          <div className="text-sm font-semibold uppercase tracking-[0.25em] text-stone-500">Donation</div>
-          <h1 className="mt-4 text-4xl font-semibold tracking-tight">Your donation is being activated.</h1>
-          <p className="mt-5 text-lg leading-8 text-stone-600">
+      <main className="px-4 py-20 sm:px-5">
+        <section className="mx-auto w-full max-w-3xl min-w-0 overflow-hidden rounded-[1.5rem] border border-stone-200 bg-white p-6 text-center shadow-sm sm:rounded-[2rem] sm:p-8">
+          <div className="text-sm font-semibold uppercase tracking-[0.18em] text-stone-500 sm:tracking-[0.25em]">Donation</div>
+          <h1 className="mt-4 break-words text-3xl font-semibold tracking-tight sm:text-4xl">Your donation is being activated.</h1>
+          <p className="mt-5 break-words text-base leading-7 text-stone-600 sm:text-lg sm:leading-8">
             Stripe has accepted the checkout. Your donation status will update after the billing webhook finishes syncing.
           </p>
-          <a href="/find-support" className="mt-7 inline-flex h-11 items-center justify-center rounded-full bg-stone-950 px-5 text-sm font-semibold text-white transition hover:bg-stone-800">
+          <a href="/find-support" className="mt-7 inline-flex min-h-11 items-center justify-center rounded-full bg-stone-950 px-5 py-3 text-center text-sm font-semibold leading-5 text-white transition hover:bg-stone-800">
             Back to donations
           </a>
         </section>
