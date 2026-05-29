@@ -39,6 +39,6 @@ describe("app routes", () => {
   });
 
   it("renders billing success route", () => {
-    expect(renderToStaticMarkup(<BillingSuccessPage />)).toContain("Your plan is being activated.");
+    expect(renderToStaticMarkup(<BillingSuccessPage />)).toContain("Your donation is being activated.");
   });
 });

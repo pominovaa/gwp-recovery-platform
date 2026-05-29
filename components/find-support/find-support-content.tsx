@@ -1,4 +1,5 @@
 import { CircleDollarSign, Lock } from "lucide-react";
+import { DonationForm } from "@/components/billing/donation-form";
 import { Card, CardContent } from "@/components/ui/card";
 import { PricingCard } from "@/components/find-support/pricing-card";
 import { tiers } from "@/components/find-support/tiers";
@@ -17,14 +18,15 @@ export function FindSupportContent() {
   return (
     <>
       <section id="find-support" className="px-5 py-20 md:py-24">
-        <SectionTitle eyebrow="Find Support" title="Recovery is hard. Finding support should not be.">
-          Recovery can feel lonely, confusing, and exhausting. GWP brings community-rated resources, moderated stories, reflection tools, and daily support into one judgment-free place — so people and families do not have to search alone.
+        <SectionTitle eyebrow="Donate Or Gift" title="Recovery is hard. Finding support should not be.">
+          Recovery can feel lonely, confusing, and exhausting. Monthly donations keep GWP building community-rated resources, moderated stories, reflection tools, and daily support. You can contribute for yourself or gift support to someone else.
         </SectionTitle>
         <div className="mx-auto grid max-w-7xl gap-5 lg:grid-cols-4">
           {tiers.map((tier) => (
             <PricingCard key={tier.name} tier={tier} />
           ))}
         </div>
+        <DonationForm />
       </section>
 
       <section className="px-5 pb-24">

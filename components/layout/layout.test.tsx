@@ -17,7 +17,7 @@ describe("layout components", () => {
 
     expect(html).toContain("Heal");
     expect(html).toContain("Stories");
-    expect(html).toContain("Subscription");
+    expect(html).toContain("Donate");
     expect(html).toContain("Find help");
   });
 });

@@ -13,6 +13,7 @@ describe("find support components", () => {
     tiers.forEach((tier) => {
       expect(html).toContain(tier.name);
     });
+    expect(html).toContain("Donations help pay for cloud resources");
   });
 
   it("renders a pricing card CTA", () => {
@@ -20,12 +21,14 @@ describe("find support components", () => {
 
     expect(html).toContain("Light");
     expect(html).toContain("Start light plan");
+    expect(html).toContain("Gift access");
+    expect(html).toContain("Gift subscription");
   });
 
   it("renders the full find support page with navigation", () => {
     const html = renderToStaticMarkup(<FindSupportPage />);
 
     expect(html).toContain("Get Whole Project");
-    expect(html).toContain("Subscription");
+    expect(html).toContain("Donate");
   });
 });

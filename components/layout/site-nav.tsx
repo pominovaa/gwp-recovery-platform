@@ -12,7 +12,7 @@ const links = [
   { label: "Live", href: "/live" },
   { label: "Give", href: "/give" },
   { label: "Stories", href: "/stories" },
-  { label: "Subscription", href: "/find-support" },
+  { label: "Donate", href: "/find-support" },
 ];
 
 export function SiteNav() {

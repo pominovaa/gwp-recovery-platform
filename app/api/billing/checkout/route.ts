@@ -31,8 +31,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Please sign up or log in first." }, { status: 401 });
     }
 
-    const { planId } = await request.json();
+    const { gift = false, planId } = await request.json();
     const plan = getBillingPlan(planId);
+    const isGift = gift === true;
+    const checkoutKind = isGift ? "gift_subscription" : "subscription";
 
     if (!plan) {
       return NextResponse.json({ error: "Unknown billing plan." }, { status: 400 });
@@ -75,19 +77,31 @@ export async function POST(request: NextRequest) {
     const origin = getOrigin(request);
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
+      custom_fields: isGift
+        ? [
+            {
+              key: "gift_recipient_email",
+              label: { custom: "Recipient email", type: "custom" },
+              optional: false,
+              type: "text",
+            },
+          ]
+        : undefined,
       line_items: [{ price: checkoutPriceId, quantity: 1 }],
       metadata: {
+        checkout_kind: checkoutKind,
         plan_id: planId,
         supabase_user_id: user.id,
       },
       mode: "subscription",
       subscription_data: {
         metadata: {
+          checkout_kind: checkoutKind,
           plan_id: planId,
           supabase_user_id: user.id,
         },
       },
-      success_url: `${origin}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${origin}/billing/success?session_id={CHECKOUT_SESSION_ID}${isGift ? "&gift=1" : ""}`,
       cancel_url: `${origin}/find-support`,
     });
 

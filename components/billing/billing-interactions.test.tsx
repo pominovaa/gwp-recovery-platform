@@ -20,7 +20,7 @@ describe("billing interactions", () => {
     render(<CheckoutButton planId="light">Start light plan</CheckoutButton>);
     await userEvent.click(screen.getByRole("button", { name: "Start light plan" }));
 
-    expect(await screen.findByText("Please sign up or log in before starting a paid plan.")).toBeTruthy();
+    expect(await screen.findByText("Please sign up or log in before checkout.")).toBeTruthy();
     expect(fetch).not.toHaveBeenCalled();
   });
 
@@ -46,8 +46,8 @@ describe("billing interactions", () => {
     });
     vi.mocked(fetch).mockRejectedValueOnce(new Error("network down"));
 
-    render(<CheckoutButton planId="family">Start family plan preview</CheckoutButton>);
-    await userEvent.click(screen.getByRole("button", { name: "Start family plan preview" }));
+    render(<CheckoutButton planId="family">Start family preview</CheckoutButton>);
+    await userEvent.click(screen.getByRole("button", { name: "Start family preview" }));
 
     expect(await screen.findByText(CHECKOUT_UNAVAILABLE_MESSAGE)).toBeTruthy();
   });

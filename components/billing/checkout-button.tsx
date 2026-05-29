@@ -9,10 +9,11 @@ import type { BillingPlanId } from "@/lib/billing/plans";
 type CheckoutButtonProps = {
   children: React.ReactNode;
   className?: string;
+  gift?: boolean;
   planId?: BillingPlanId;
 };
 
-export function CheckoutButton({ children, className = "", planId }: CheckoutButtonProps) {
+export function CheckoutButton({ children, className = "", gift = false, planId }: CheckoutButtonProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -32,7 +33,7 @@ export function CheckoutButton({ children, className = "", planId }: CheckoutBut
       } = await supabaseBrowser.auth.getSession();
 
       if (!session?.access_token) {
-        setError("Please sign up or log in before starting a paid plan.");
+        setError("Please sign up or log in before checkout.");
         setLoading(false);
         return;
       }
@@ -43,7 +44,7 @@ export function CheckoutButton({ children, className = "", planId }: CheckoutBut
           "Content-Type": "application/json",
           Authorization: `Bearer ${session.access_token}`,
         },
-        body: JSON.stringify({ planId }),
+        body: JSON.stringify({ gift, planId }),
       });
 
       const data = await readJsonResponse(response);

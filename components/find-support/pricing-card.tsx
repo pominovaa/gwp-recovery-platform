@@ -1,4 +1,4 @@
-import { Check, Eye, Sparkles } from "lucide-react";
+import { Check, Eye, Gift, Sparkles } from "lucide-react";
 import { CheckoutButton } from "@/components/billing/checkout-button";
 import { Card, CardContent } from "@/components/ui/card";
 import type { BillingPlanId } from "@/lib/billing/plans";
@@ -35,9 +35,32 @@ export function PricingCard({ tier }: PricingCardProps) {
             </div>
           ))}
         </div>
-        <CheckoutButton planId={tier.planId} className={`mt-auto h-11 rounded-full ${tier.featured ? "bg-white text-stone-950 hover:bg-stone-100" : "bg-stone-950 text-white hover:bg-stone-800"}`}>
-          {tier.cta}
-        </CheckoutButton>
+        <div className="mt-auto space-y-3">
+          <CheckoutButton planId={tier.planId} className={`h-11 rounded-full ${tier.featured ? "bg-white text-stone-950 hover:bg-stone-100" : "bg-stone-950 text-white hover:bg-stone-800"}`}>
+            {tier.cta}
+          </CheckoutButton>
+          {tier.planId && (
+            <div className={`rounded-2xl border p-3 ${tier.featured ? "border-white/15 bg-white/5" : "border-stone-200 bg-stone-50"}`}>
+              <div className={`mb-2 text-xs font-semibold uppercase tracking-[0.18em] ${tier.featured ? "text-stone-300" : "text-stone-500"}`}>
+                Gift access
+              </div>
+              <CheckoutButton
+                gift
+                planId={tier.planId}
+                className={`h-10 rounded-full border ${
+                  tier.featured
+                    ? "border-white/25 bg-stone-900 text-white hover:bg-stone-800"
+                    : "border-stone-200 bg-white text-stone-950 hover:bg-stone-50"
+                }`}
+              >
+                <span className="inline-flex items-center justify-center gap-2">
+                  <Gift className="h-4 w-4" />
+                  Gift subscription
+                </span>
+              </CheckoutButton>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );

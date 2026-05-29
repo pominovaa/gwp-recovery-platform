@@ -34,8 +34,8 @@ export function AccountPanel({ authError, authLoading, email, onSignOut }: Accou
       <div className="grid gap-5 md:grid-cols-2">
         <Card className="rounded-[2rem] border-stone-200 bg-white shadow-sm">
           <CardContent className="p-7">
-            <h2 className="text-xl font-semibold text-stone-950">Subscription</h2>
-            <p className="mt-3 leading-7 text-stone-600">View plan, renewal date, billing status, donations, and the 14-day guarantee.</p>
+            <h2 className="text-xl font-semibold text-stone-950">Donations</h2>
+            <p className="mt-3 leading-7 text-stone-600">View contribution level, renewal date, gift donations, billing status, and the 14-day guarantee.</p>
             <BillingPortalButton className="mt-5 h-11 rounded-full bg-stone-950 px-5 text-white hover:bg-stone-800" />
           </CardContent>
         </Card>
