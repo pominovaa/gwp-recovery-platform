@@ -46,9 +46,64 @@ Its purpose is to link branches, commits, and PRs to Linear issues and to option
 
 The Codex workflow remains the primary orchestrator for planning, implementation, testing, validation, and PR creation.
 
+## Known repository prerequisites
+
+These prerequisites must be resolved in the repository before the workflow is
+rolled out, because the workflow's hard gates depend on them.
+
+### `npm run lint` is currently broken on Next.js 16
+
+The repository runs `next ^16.2.6` but still defines:
+
+```json
+"lint": "next lint"
+```
+
+Next.js 16 removed the `next lint` command entirely (it was not merely
+deprecated), removed the `eslint` option from the Next config, and stopped
+running ESLint automatically during `next build`. As a result, `npm run lint`
+will fail on every run, and the lint gate in this workflow can never pass as
+written.
+
+Required fix before rollout: migrate to the ESLint CLI using the official
+codemod, which rewrites `package.json` scripts and creates an ESLint flat config:
+
+```bash
+npx @next/codemod@canary next-lint-to-eslint-cli .
+```
+
+After migration, the lint script should call ESLint directly, for example:
+
+```json
+"lint": "eslint ."
+```
+
+### Add an explicit typecheck script
+
+Because Next.js 16 no longer runs linting during `next build`, and to catch
+type regressions introduced by the Development Agent, add a dedicated typecheck
+script:
+
+```json
+"typecheck": "tsc --noEmit"
+```
+
+This workflow treats `npm run typecheck` as a required verification command (see
+"Required verification commands"). If the script does not yet exist, adding it is
+part of repository prerequisite setup, not a per-issue change.
+
 ## Workflow modes
 
 Codex must distinguish between read-only planning and active implementation.
+
+Mode selection must be deterministic, not inferred loosely from natural language.
+The preferred trigger for work mode is explicit invocation of the
+`gwp-linear-to-pr` skill (for example `/skills` or `$gwp-linear-to-pr` in the
+CLI/IDE, or naming the skill in the prompt). When the request is ambiguous,
+Codex must default to the safe, read-only explain or plan mode and ask the
+developer to confirm before entering work mode. Work mode requires an explicit
+implementation verb such as "work on", "implement", or "build" plus a valid
+Linear issue ID.
 
 ### Explain or plan mode
 
@@ -103,6 +158,7 @@ The preflight must verify:
 8. GitHub authentication is available for PR creation.
 9. The developer can push a branch to the upstream repository.
 10. The native Linear GitHub integration is installed for `olena-ageyeva/gwp-recovery-platform`.
+11. The repository defines runnable `npm test`, `npm run lint`, `npm run typecheck`, and `npm run build` scripts (see "Known repository prerequisites").
 
 If upstream push access fails, Codex must stop and report the failure. The
 developer may then choose either:
@@ -136,6 +192,26 @@ Duplicate
 Codex must not automatically move issues into or out of `Backlog`, `Canceled`, or `Duplicate`.
 
 ## Status transition rules
+
+### How status changes are performed via Linear MCP
+
+Linear workflow statuses are not global names; each team defines its own ordered
+set of workflow states, and every state has a team-scoped state ID. The status
+labels `Todo`, `In Progress`, `In Review`, and `Done` in this document are human
+labels, not values that can be passed directly to the Linear API.
+
+Before moving an issue, Codex must:
+
+1. Resolve the issue's team from the fetched Linear issue.
+2. List that team's workflow states via the approved Linear MCP.
+3. Map the target human label (for example `In Progress`) to the matching
+   team state ID, matching case-insensitively and tolerating minor label
+   differences (for example `In Progress` vs `In progress`).
+4. Update the issue to that resolved state ID.
+
+If the target state cannot be resolved unambiguously for the issue's team, Codex
+must stop and report the available states instead of guessing. Codex must never
+hardcode a state ID or assume a label string is identical across teams.
 
 ### Todo → In Progress
 
@@ -227,6 +303,10 @@ git pull
 git checkout -b gwp-26-short-description
 ```
 
+If `git pull` fails or `main` has diverged locally, Codex must stop and report the
+failure rather than branching from a stale or conflicted `main`. Codex must not
+attempt to force-resolve `main` automatically.
+
 Replace `GWP-26` and `short-description` with the actual issue ID and issue slug.
 
 Branch matching must be case-insensitive for the issue ID. The important rule is
@@ -278,6 +358,7 @@ Linear issue: GWP-26
 ## Verification
 - [x] npm test
 - [x] npm run lint
+- [x] npm run typecheck
 - [x] npm run build
 
 ## Validation
@@ -319,20 +400,24 @@ Before validation and PR creation, Codex must run:
 ```bash
 npm test
 npm run lint
+npm run typecheck
 npm run build
 ```
 
-The current repository already defines `npm run lint`, so linting is required for
-version 0.1. If the lint command is unavailable or broken because of framework
-tooling changes, Codex must stop, report the exact failure, and ask whether to
-update the lint setup or proceed with documented risk.
+`npm run lint` and `npm run typecheck` depend on the repository prerequisites
+described in "Known repository prerequisites". On Next.js 16, `next lint` no
+longer exists, so the lint script must already be migrated to the ESLint CLI, and
+`npm run typecheck` (`tsc --noEmit`) must already be defined. If either command is
+missing or broken because of framework tooling changes, Codex must stop, report
+the exact failure, and ask whether to fix the repository setup or proceed with
+documented risk. Codex must not silently skip a missing gate.
 
-If the repository later adds explicit typechecking or end-to-end tests, this workflow should be updated to include them.
+If the repository later adds end-to-end tests, this workflow should be updated to
+include them.
 
-Suggested future commands:
+Suggested future command:
 
 ```bash
-npm run typecheck
 npm run test:e2e
 ```
 
@@ -365,7 +450,7 @@ Spawn Development Agent
   ↓
 Development Agent implements approved plan and tests
   ↓
-Run npm test, npm run lint, and npm run build
+Run npm test, npm run lint, npm run typecheck, and npm run build
   ↓
 Spawn Validation Agent
   ↓
@@ -407,18 +492,60 @@ Looks good
 
 If the developer changes the plan, Codex must update the plan before implementation.
 
+### Persisting the approved plan to Linear
+
+Linear issues have no structured acceptance-criteria field; acceptance criteria
+live in free-text in the issue description. The Planning Agent extracts and
+refines them into concrete, testable criteria, but that refined output must be
+captured somewhere the team can see.
+
+After the developer approves the plan, and only after approval, Codex must post
+the approved implementation plan and final acceptance criteria as a comment on
+the Linear issue. This gives reviewers, the eventual PR, and the validation step
+a single shared source of truth. The same acceptance criteria must then appear
+verbatim in the PR body.
+
+Codex must not post the plan to Linear before approval, and must not overwrite
+the issue description.
+
 ## Agent execution model
 
-Version 0.1 uses project skills and local Codex orchestration as the primary
-execution model.
+Version 0.1 uses Codex project-scoped custom agents plus local orchestration as
+the primary execution model.
 
-Codex may use separate planning, development, and validation agents when the
-local Codex environment supports multi-agent execution. If project-scoped agent
-configuration files are used, their format must be verified against the current
-Codex agent configuration format before implementation.
+The three phases are implemented as real Codex custom agents defined under
+`.codex/agents/*.toml` (see "Project-scoped custom agents"). These are required,
+not optional, for version 0.1, because the `sandbox_mode` field in those files is
+what actually enforces the read-only planning and read-only validation
+boundaries. Phase boundaries expressed only in prose can be ignored by the model;
+phase boundaries expressed as `sandbox_mode = "read-only"` cannot.
 
-If multi-agent execution is unavailable, Codex must still follow the same phase
-boundaries in a single local session:
+Do not confuse these custom agents with a skill's optional `agents/openai.yaml`
+file. `agents/openai.yaml` only configures a skill's UI metadata and invocation
+policy; it does not define the planning, development, or validation agents. Those
+agents must be true custom agents under `.codex/agents/*.toml`.
+
+### Orchestration model
+
+The `gwp-linear-to-pr` skill runs in the root Codex session, and the root session
+is the sole orchestrator. The root session spawns the planning, development, and
+validation agents directly, in sequence, gated by the human approval and
+validation steps.
+
+Constraints to respect, based on current Codex subagent behavior:
+
+1. Codex spawns subagents only when explicitly instructed to. The skill must
+   explicitly request each agent.
+2. The default maximum subagent nesting depth is 1 (the root session is depth 0).
+   A spawned agent cannot reliably spawn its own subagent, so the Development
+   Agent must not be expected to spawn the Validation Agent. All three agents are
+   spawned by the root orchestrator.
+3. Each subagent runs its own model and tool work, so this multi-agent flow
+   consumes meaningfully more tokens than a single-agent run. This matters because
+   the workflow is distributed across the whole team.
+
+If multi-agent execution is unavailable in a given environment, Codex must still
+follow the same phase boundaries in a single local session:
 
 1. Planning phase is read-only.
 2. Development phase is workspace-write and limited to the approved plan.
@@ -554,12 +681,13 @@ The Development Agent must run:
 ```bash
 npm test
 npm run lint
+npm run typecheck
 npm run build
 ```
 
 ### Repair loop
 
-If tests, lint, or build fail, the Development Agent may attempt to fix the problem.
+If tests, lint, typecheck, or build fail, the Development Agent may attempt to fix the problem.
 
 Maximum repair attempts:
 
@@ -601,7 +729,8 @@ The Validation Agent receives:
 4. Git diff against `main`.
 5. Test results.
 6. Lint results.
-7. Build results.
+7. Typecheck results.
+8. Build results.
 
 ### Responsibilities
 
@@ -750,18 +879,22 @@ Recommended plugin name:
 gwp-linear-workflow
 ```
 
-Recommended structure:
+Recommended structure, following the standard Codex plugin layout (only
+`plugin.json` lives inside `.codex-plugin/`; everything else lives at the plugin
+root):
 
 ```text
 gwp-linear-workflow/
   .codex-plugin/
-    plugin.json
+    plugin.json            # required manifest, the only file in this directory
 
   skills/
     gwp-linear-to-pr/
       SKILL.md
       agents/
-        openai.yaml
+        openai.yaml        # OPTIONAL: skill UI metadata + invocation policy only.
+                           # This does NOT define the planning/dev/validation
+                           # agents. Those are .codex/agents/*.toml in the repo.
 
     gwp-pr-validation/
       SKILL.md
@@ -769,31 +902,76 @@ gwp-linear-workflow/
     gwp-test-and-build/
       SKILL.md
 
-  hooks/
-    hooks.json
+    gwp-doctor/
+      SKILL.md             # preflight/onboarding checker (see Team onboarding)
+
+  .mcp.json                # OPTIONAL: bundles the Linear MCP server config so
+                           # developers only need to run `codex mcp login linear`
+
+  hooks.json               # OPTIONAL: lifecycle hooks (v0.2)
+  scripts/
     guard_no_main_commit.py
     guard_branch_name.py
     guard_no_secret_commit.py
 
+  assets/                  # OPTIONAL: icon/screenshots for the plugin
   README.md
 ```
 
+The planning, development, and validation custom agents are not part of the
+plugin bundle. They are project-scoped repository files committed under
+`.codex/agents/` in `olena-ageyeva/gwp-recovery-platform` (see "Project-scoped
+custom agents"). The plugin distributes the skills and MCP configuration; the
+repository carries the custom agents and `AGENTS.md`.
+
 ## Plugin manifest
 
-Suggested `.codex-plugin/plugin.json`:
+The Codex plugin manifest is a JSON file at `.codex-plugin/plugin.json`. The
+`name` must be stable kebab-case (Codex uses it as the plugin identifier), and
+all component paths must be relative to the plugin root and start with `./`.
+
+Minimal `.codex-plugin/plugin.json` for version 0.1:
 
 ```json
 {
   "name": "gwp-linear-workflow",
   "version": "0.1.0",
   "description": "Local Codex workflow for implementing GWP Recovery Platform Linear issues with planning, tests, validation, PR creation, and Linear status transitions.",
-  "skills": "./skills/"
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json"
 }
 ```
 
-If MCP configuration is packaged through the plugin later, add it according to the current Codex plugin configuration format.
+Additional manifest fields supported by Codex that may be added for distribution
+polish: `author`, `license`, `keywords`, and an `interface` object containing
+presentation metadata such as `displayName`, `shortDescription`, `category`,
+`capabilities`, `brandColor`, and `composerIcon`. Confirm the exact accepted keys
+against the current Codex plugin build docs before publishing, since the manifest
+schema is still evolving.
 
-For version 0.1, developers may configure Linear MCP directly in their local Codex setup.
+### Bundling the Linear MCP server
+
+Rather than asking every developer to hand-add the Linear MCP server, the plugin
+can bundle it via a root-level `.mcp.json` referenced by `mcpServers` above. The
+server is a hosted streamable HTTP endpoint:
+
+```json
+{
+  "mcpServers": {
+    "linear": {
+      "url": "https://mcp.linear.app/mcp"
+    }
+  }
+}
+```
+
+With this bundled, each developer only needs to authenticate once via
+`codex mcp login linear`. Do not bundle any Linear token or secret in the plugin;
+authentication is per-developer OAuth.
+
+Installed plugins are tracked per developer in `~/.codex/config.toml` under the
+`[plugins]` table, which controls enable/disable state. The `plugin.json` manifest
+is the source of truth for plugin identity and bundled components.
 
 ## Required local integration setup
 
@@ -836,6 +1014,53 @@ gh auth status
 If `gh` is not installed or authenticated, Codex may use another available
 GitHub connector. If no GitHub PR creation mechanism is available, Codex must
 stop before implementation and report the missing setup.
+
+## Team onboarding
+
+Because this plugin is distributed to every developer, some setup is inherently
+per-developer and cannot be carried inside the plugin (it depends on personal
+OAuth and credentials). Each developer must complete, once:
+
+1. Install the `gwp-linear-workflow` plugin and enable it.
+2. Authenticate the bundled Linear MCP server:
+
+   ```bash
+   codex mcp login linear
+   ```
+
+3. Ensure GitHub push and PR access to `olena-ageyeva/gwp-recovery-platform`,
+   for example via authenticated GitHub CLI:
+
+   ```bash
+   gh auth status
+   ```
+
+A short `README.md` in the plugin should document these steps so onboarding does
+not depend on tribal knowledge.
+
+### gwp-doctor preflight skill
+
+To reduce support load, ship a lightweight `gwp-doctor` skill that checks the
+developer's environment and prints a clear pass/fail report. It should verify:
+
+1. The current repository remote is `olena-ageyeva/gwp-recovery-platform`.
+2. Linear MCP is configured and authenticated.
+3. GitHub PR creation is available (`gh auth status` or an equivalent connector).
+4. `npm run lint`, `npm run typecheck`, and `npm run build` scripts exist and run
+   (catching the Next.js 16 lint-migration prerequisite early).
+5. The `.codex/agents/*.toml` custom agents are present and loadable.
+
+`gwp-doctor` is read-only and must never change Linear status, create branches,
+or edit files.
+
+### Note on profiles
+
+Codex profiles are experimental and are not supported in the IDE extension, and
+project-local `.codex/config.toml` ignores certain keys (for example
+`model_provider`, `profiles`, `notify`). Do not rely on profiles or project-local
+provider/model overrides to enforce this workflow. The enforceable, portable
+mechanisms are `AGENTS.md`, the skills, and the `.codex/agents/*.toml` custom
+agents with their `sandbox_mode` settings.
 
 ## Skill: gwp-linear-to-pr
 
@@ -893,21 +1118,23 @@ a branch, editing files, committing, pushing, or creating a PR.
 14. Require tests to be added or updated for behavior changes.
 15. Run `npm test`.
 16. Run `npm run lint`.
-17. Run `npm run build`.
-18. If verification fails, repair up to 3 cycles.
-19. Spawn the Validation Agent in read-only mode.
-20. If validation fails, return findings to the Development Agent, repair, rerun tests, rerun lint, rerun build, and validate again.
-21. Do not create a PR unless validation returns PASS.
-22. Create a GitHub PR with the Linear issue ID in the title.
-23. Include acceptance criteria and verification results in the PR body.
-24. Move the Linear issue to `In Review`.
-25. Post a final summary including branch, PR URL, verification commands, and Linear status.
+17. Run `npm run typecheck`.
+18. Run `npm run build`.
+19. If verification fails, repair up to 3 cycles.
+20. Spawn the Validation Agent in read-only mode.
+21. If validation fails, return findings to the Development Agent, repair, rerun tests, rerun lint, rerun typecheck, rerun build, and validate again.
+22. Do not create a PR unless validation returns PASS.
+23. Create a GitHub PR with the Linear issue ID in the title.
+24. Include acceptance criteria and verification results in the PR body.
+25. Move the Linear issue to `In Review`.
+26. Post a final summary including branch, PR URL, verification commands, and Linear status.
 
 ## Hard rules
 
 - Never commit directly to `main`.
 - Never create a PR if `npm test` fails.
 - Never create a PR if `npm run lint` fails.
+- Never create a PR if `npm run typecheck` fails.
 - Never create a PR if `npm run build` fails.
 - Never create a PR if the Validation Agent fails.
 - Never move an issue to `Done`; `Done` means PR merged.
@@ -957,6 +1184,7 @@ When working on a Linear issue:
 ```bash
 npm test
 npm run lint
+npm run typecheck
 npm run build
 ```
 
@@ -1055,6 +1283,7 @@ Linear issue: GWP-XX
 ## Verification
 - [x] npm test
 - [x] npm run lint
+- [x] npm run typecheck
 - [x] npm run build
 
 ## Validation
@@ -1073,13 +1302,21 @@ Linear issue: GWP-XX
 
 ## Project-scoped custom agents
 
-Project-scoped custom agents are optional for version 0.1. Before adding these
-files, verify that `.codex/agents/*.toml` is the current supported Codex
-configuration format for project agents.
+Project-scoped custom agents are required for version 0.1. Codex supports custom
+agents as standalone TOML files under `.codex/agents/` (project scope) or
+`~/.codex/agents/` (personal scope). Each file defines exactly one agent and must
+include `name`, `description`, and `developer_instructions`. It may also set other
+config keys such as `model`, `model_reasoning_effort`, `sandbox_mode`,
+`mcp_servers`, and `skills.config`. Codex loads these as configuration layers for
+spawned agent sessions.
 
-If this format is not supported, do not add these files. Keep the workflow in
-the plugin skill and follow the same planning, development, and validation phase
-boundaries in the local Codex session.
+These agents are the mechanism that enforces the workflow's phase boundaries:
+`sandbox_mode = "read-only"` on the planner and validator is what actually
+prevents file edits, rather than relying on prose instructions alone.
+
+These are distinct from a skill's optional `agents/openai.yaml`, which only
+configures a skill's UI metadata and invocation policy and must not be used to
+define these agents.
 
 Add project-scoped agents under:
 
@@ -1157,6 +1394,7 @@ You must:
 - Avoid committing secrets.
 - Run npm test.
 - Run npm run lint.
+- Run npm run typecheck.
 - Run npm run build.
 - Fix failures caused by your implementation.
 - Stop after 3 failed repair attempts and summarize the issue.
@@ -1189,6 +1427,7 @@ Review:
 - The git diff against main.
 - Test results.
 - Lint results.
+- Typecheck results.
 - Build results.
 
 Check:
@@ -1258,6 +1497,7 @@ Before PR creation, verify that these commands were run after the final code cha
 ```bash
 npm test
 npm run lint
+npm run typecheck
 npm run build
 ```
 
@@ -1329,10 +1569,11 @@ Summarize:
 2. Commit hash.
 3. Test results.
 4. Lint results.
-5. Build results.
-6. Validation result.
-7. PR creation error.
-8. Manual next steps.
+5. Typecheck results.
+6. Build results.
+7. Validation result.
+8. PR creation error.
+9. Manual next steps.
 
 ## Final response format after successful workflow
 
@@ -1349,6 +1590,7 @@ Status:
 Verification:
 - npm test: passed
 - npm run lint: passed
+- npm run typecheck: passed
 - npm run build: passed
 - Internal validation: passed
 
@@ -1365,19 +1607,31 @@ Notes:
 
 ## Initial rollout plan
 
+### Version 0.0 (repository prerequisites)
+
+Complete before any plugin rollout (see "Known repository prerequisites"):
+
+1. Migrate `npm run lint` from `next lint` to the ESLint CLI.
+2. Add an `npm run typecheck` script (`tsc --noEmit`).
+3. Confirm `npm test`, `npm run lint`, `npm run typecheck`, and `npm run build`
+   all run cleanly on `main`.
+
 ### Version 0.1
 
 Implement:
 
-1. Local Linear MCP setup.
+1. Linear MCP bundled in the plugin via `.mcp.json` (plus per-developer
+   `codex mcp login linear`).
 2. `gwp-linear-to-pr` skill.
-3. Project `AGENTS.md`.
-4. Project custom agents:
-   - Planning Agent
-   - Development Agent
-   - Validation Agent
-5. PR template.
-6. Native Linear GitHub integration for linking and final Done-on-merge behavior.
+3. `gwp-doctor` preflight/onboarding skill.
+4. Project `AGENTS.md`.
+5. Project custom agents under `.codex/agents/*.toml` (required, not optional):
+   - Planning Agent (`sandbox_mode = "read-only"`)
+   - Development Agent (workspace-write)
+   - Validation Agent (`sandbox_mode = "read-only"`)
+6. PR template.
+7. Native Linear GitHub integration for linking and final Done-on-merge behavior.
+8. Plugin `README.md` documenting per-developer onboarding.
 
 Do not implement yet:
 
