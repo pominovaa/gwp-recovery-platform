@@ -141,6 +141,12 @@ Codex must detect existing local branches, remote branches, and open PRs for the
 issue before creating new branches or PRs. If multiple candidates exist, Codex
 must ask the developer which one to continue.
 
+To restore context across sessions, Codex should re-read the approved plan and
+acceptance criteria from the Linear comment posted at approval time (see
+"Persisting the approved plan to Linear") rather than re-planning from scratch. If
+no such comment exists, treat the issue as not yet planned and re-run the planning
+phase.
+
 ## Required preflight
 
 Before changing Linear status, creating a branch, editing files, committing, or
@@ -393,6 +399,44 @@ Fixes GWP-26
 
 Use closing words only when the team wants PR merge to mean the Linear issue is done.
 
+## Commit, push, and PR creation sequence
+
+The workflow overview and skill steps must commit, push, and open the PR in this
+explicit order. These steps are easy to leave implicit, but without them no PR can
+be created.
+
+1. After the Development Agent's changes pass all required verification commands,
+   stage and commit on the issue branch using the commit convention:
+
+   ```bash
+   git add -A
+   git commit -m "GWP-26: implement account recovery flow"
+   ```
+
+   The Validation Agent reviews this committed diff (`git diff main...HEAD`), not
+   uncommitted working-tree state.
+
+2. Only after the Validation Agent returns `PASS`, push the issue branch to the
+   upstream repository:
+
+   ```bash
+   git push -u origin gwp-26-short-description
+   ```
+
+3. Create the PR against upstream `main` using the GitHub CLI (or an equivalent
+   connector) with the issue ID in the title and the PR body convention:
+
+   ```bash
+   gh pr create --base main --head gwp-26-short-description \
+     --title "GWP-26: Add account recovery flow" \
+     --body-file <generated PR body>
+   ```
+
+4. Capture the returned PR URL for the final summary and the Linear update.
+
+If commits already exist on the branch (resume mode), Codex must not duplicate
+them; it commits only new changes and pushes the updated branch.
+
 ## Required verification commands
 
 Before validation and PR creation, Codex must run:
@@ -446,19 +490,25 @@ Planning Agent produces implementation plan and acceptance criteria
   ↓
 Developer approves plan
   ↓
+Post the approved plan and acceptance criteria as a Linear comment
+  ↓
 Spawn Development Agent
   ↓
 Development Agent implements approved plan and tests
   ↓
 Run npm test, npm run lint, npm run typecheck, and npm run build
   ↓
+Commit changes to the issue branch with the Linear issue ID
+  ↓
 Spawn Validation Agent
   ↓
-Validation Agent reviews diff against plan and acceptance criteria
+Validation Agent reviews committed diff against plan and acceptance criteria
   ↓
 If validation fails, return to Development Agent
   ↓
-If validation passes, create PR
+If validation passes, push the issue branch to the upstream repository
+  ↓
+Create PR with gh
   ↓
 Move Linear issue to In Review
   ↓
@@ -543,6 +593,13 @@ Constraints to respect, based on current Codex subagent behavior:
 3. Each subagent runs its own model and tool work, so this multi-agent flow
    consumes meaningfully more tokens than a single-agent run. This matters because
    the workflow is distributed across the whole team.
+4. Spawned subagents are non-interactive: they do not have the developer in the
+   loop and return their results to the root session. Only the root orchestrator
+   interacts with the developer. Therefore the human approval gate, all clarifying
+   questions, and all confirmations happen in the root session. When the Planning
+   Agent has open questions, it returns them to the root session, which relays them
+   to the developer and feeds the answers back into a revised plan before the
+   Development Agent is spawned.
 
 If multi-agent execution is unavailable in a given environment, Codex must still
 follow the same phase boundaries in a single local session:
@@ -666,13 +723,19 @@ The Development Agent receives:
 
 The Development Agent must:
 
-1. Implement only the approved plan.
-2. Keep changes minimal and focused.
-3. Add or update tests for changed behavior.
-4. Preserve existing behavior unless the approved plan says otherwise.
-5. Run required verification commands.
-6. Fix failing tests caused by the implementation.
-7. Stop and ask for help if requirements are unclear or failures cannot be resolved safely.
+1. Ensure dependencies are installed (run `npm install` if `node_modules` is
+   missing) before running verification.
+2. Implement only the approved plan.
+3. Keep changes minimal and focused.
+4. Add or update tests for changed behavior, following the repository's testing
+   conventions (Vitest with React Testing Library; co-located `*.test.ts(x)`
+   files).
+5. Preserve existing behavior unless the approved plan says otherwise.
+6. Run required verification commands.
+7. Fix failing tests caused by the implementation.
+8. After verification passes, commit the changes to the issue branch using the
+   commit convention (Linear issue ID in the message).
+9. Stop and ask for help if requirements are unclear or failures cannot be resolved safely.
 
 ### Required commands
 
@@ -1035,6 +1098,12 @@ OAuth and credentials). Each developer must complete, once:
    gh auth status
    ```
 
+4. Trust the project when first opening it in Codex. Codex loads the repository's
+   `.codex/` layers (including `.codex/agents/*.toml` and any `.codex/config.toml`)
+   only for trusted projects. Without trust, the planning, development, and
+   validation custom agents will not load and the workflow falls back to a single
+   session.
+
 A short `README.md` in the plugin should document these steps so onboarding does
 not depend on tribal knowledge.
 
@@ -1048,7 +1117,8 @@ developer's environment and prints a clear pass/fail report. It should verify:
 3. GitHub PR creation is available (`gh auth status` or an equivalent connector).
 4. `npm run lint`, `npm run typecheck`, and `npm run build` scripts exist and run
    (catching the Next.js 16 lint-migration prerequisite early).
-5. The `.codex/agents/*.toml` custom agents are present and loadable.
+5. The `.codex/agents/*.toml` custom agents are present and loadable, and the
+   project is trusted so those agents actually load.
 
 `gwp-doctor` is read-only and must never change Linear status, create branches,
 or edit files.
@@ -1113,21 +1183,25 @@ a branch, editing files, committing, pushing, or creating a PR.
 9. Create a branch from `main` using the issue ID.
 10. Spawn the Planning Agent in read-only mode.
 11. Present the implementation plan and acceptance criteria to the developer.
-12. Wait for explicit developer approval.
-13. Spawn the Development Agent to implement the approved plan.
-14. Require tests to be added or updated for behavior changes.
-15. Run `npm test`.
-16. Run `npm run lint`.
-17. Run `npm run typecheck`.
-18. Run `npm run build`.
-19. If verification fails, repair up to 3 cycles.
-20. Spawn the Validation Agent in read-only mode.
-21. If validation fails, return findings to the Development Agent, repair, rerun tests, rerun lint, rerun typecheck, rerun build, and validate again.
-22. Do not create a PR unless validation returns PASS.
-23. Create a GitHub PR with the Linear issue ID in the title.
-24. Include acceptance criteria and verification results in the PR body.
-25. Move the Linear issue to `In Review`.
-26. Post a final summary including branch, PR URL, verification commands, and Linear status.
+12. Wait for explicit developer approval. The Planning Agent cannot ask the
+    developer directly; relay its open questions and answers in the root session.
+13. After approval, post the approved plan and acceptance criteria as a Linear comment.
+14. Spawn the Development Agent to implement the approved plan.
+15. Require tests to be added or updated for behavior changes.
+16. Run `npm test`.
+17. Run `npm run lint`.
+18. Run `npm run typecheck`.
+19. Run `npm run build`.
+20. If verification fails, repair up to 3 cycles.
+21. Commit the changes to the issue branch with the Linear issue ID in the message.
+22. Spawn the Validation Agent in read-only mode to review the committed diff.
+23. If validation fails, return findings to the Development Agent, repair, recommit, rerun verification, and validate again.
+24. Do not push or create a PR unless validation returns PASS.
+25. Push the issue branch to the upstream repository.
+26. Create a GitHub PR with `gh`, using the Linear issue ID in the title.
+27. Include acceptance criteria and verification results in the PR body.
+28. Move the Linear issue to `In Review`.
+29. Post a final summary including branch, PR URL, verification commands, and Linear status.
 
 ## Hard rules
 
@@ -1188,7 +1262,7 @@ npm run typecheck
 npm run build
 ```
 
-9. Do not create a PR unless tests, lint, and build pass.
+9. Do not create a PR unless tests, lint, typecheck, and build pass.
 10. Do not create a PR unless internal validation passes.
 
 ## Linear statuses
