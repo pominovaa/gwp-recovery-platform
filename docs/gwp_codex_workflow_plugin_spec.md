@@ -1392,19 +1392,32 @@ These are distinct from a skill's optional `agents/openai.yaml`, which only
 configures a skill's UI metadata and invocation policy and must not be used to
 define these agents.
 
-Add project-scoped agents under:
+### Repository setup: create the shared custom agents
 
-```text
-.codex/agents/
-```
+Creating these agents is a one-time repository setup task, not a per-issue step.
+The implementer (or Codex itself, running this workflow against the build-out
+issue) must:
 
-Suggested files:
+1. Create the three files below with the contents defined in this section, at
+   these exact paths in `olena-ageyeva/gwp-recovery-platform`:
 
-```text
-.codex/agents/gwp-planner.toml
-.codex/agents/gwp-developer.toml
-.codex/agents/gwp-validator.toml
-```
+   ```text
+   .codex/agents/gwp-planner.toml
+   .codex/agents/gwp-developer.toml
+   .codex/agents/gwp-validator.toml
+   ```
+
+2. Commit them to the repository on a branch and merge them via PR, the same way
+   any other change lands. Because they live in the repo (not in the plugin
+   bundle), every developer who clones the repository receives the same agents
+   automatically — there is no per-developer agent creation.
+
+3. Note that committed agent files only take effect once a developer **trusts the
+   project** in Codex (see "Team onboarding"). `gwp-doctor` verifies both that the
+   files are present and that the project is trusted.
+
+After this setup lands on `main`, the `gwp-linear-to-pr` skill can reference these
+agents by name for every subsequent issue.
 
 ### gwp-planner.toml
 
