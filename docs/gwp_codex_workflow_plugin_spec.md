@@ -952,6 +952,9 @@ gwp-linear-workflow/
     plugin.json            # required manifest, the only file in this directory
 
   skills/
+    gwp-linear-ops/
+      SKILL.md             # plugin-local Linear issue/comment/status operations
+
     gwp-linear-to-pr/
       SKILL.md
       agents/
@@ -1174,7 +1177,7 @@ a branch, editing files, committing, pushing, or creating a PR.
 
 1. Parse the Linear issue ID from the user request.
 2. Confirm the current Git repository is `olena-ageyeva/gwp-recovery-platform`.
-3. Fetch the Linear issue using the approved Linear skill/MCP.
+3. Fetch the Linear issue using the plugin-local `gwp-linear-ops` skill over Linear MCP.
 4. Read title, description, comments, labels, priority, status, and acceptance criteria.
 5. If issue status is not `Todo`, warn the developer and ask whether to continue.
 6. If the issue is in `Backlog`, `Canceled`, or `Duplicate`, stop unless the developer explicitly overrides.
@@ -1710,15 +1713,16 @@ Implement:
 1. Linear MCP bundled in the plugin via `.mcp.json` (plus per-developer
    `codex mcp login linear`).
 2. `gwp-linear-to-pr` skill.
-3. `gwp-doctor` preflight/onboarding skill.
-4. Project `AGENTS.md`.
-5. Project custom agents under `.codex/agents/*.toml` (required, not optional):
+3. `gwp-linear-ops` plugin-local Linear operations skill.
+4. `gwp-doctor` preflight/onboarding skill.
+5. Project `AGENTS.md`.
+6. Project custom agents under `.codex/agents/*.toml` (required, not optional):
    - Planning Agent (`sandbox_mode = "read-only"`)
    - Development Agent (workspace-write)
    - Validation Agent (`sandbox_mode = "read-only"`)
-6. PR template.
-7. Native Linear GitHub integration for linking and final Done-on-merge behavior.
-8. Plugin `README.md` documenting per-developer onboarding.
+7. PR template.
+8. Native Linear GitHub integration for linking and final Done-on-merge behavior.
+9. Plugin `README.md` documenting per-developer onboarding.
 
 Do not implement yet:
 

@@ -1,0 +1,54 @@
+# GWP Linear Workflow Plugin
+
+This plugin packages the local Codex workflow for implementing GWP Recovery
+Platform Linear issues and opening GitHub pull requests.
+
+The canonical workflow specification lives in the repository at
+`docs/gwp_codex_workflow_plugin_spec.md`.
+
+## One-Time Developer Setup
+
+1. Install and enable this plugin.
+2. Authenticate Linear:
+
+```bash
+codex mcp login linear
+```
+
+3. Authenticate GitHub CLI with upstream push and PR permissions:
+
+```bash
+gh auth status
+```
+
+4. Trust the GWP Recovery Platform repository in Codex so project-scoped agents
+   under `.codex/agents/*.toml` are loaded.
+5. Run the `gwp-doctor` skill from the repository root.
+
+The plugin bundles its own GWP-specific Linear operations skill
+(`gwp-linear-ops`), so developers do not need to separately install the
+standalone Linear skill. Each developer still needs personal Linear OAuth.
+
+## Everyday Use
+
+From the repository root, ask Codex:
+
+```text
+$gwp-linear-to-pr Work on Linear issue GWP-26
+```
+
+The workflow fetches the issue, runs preflight, moves the issue to In Progress,
+creates an issue branch, produces a read-only plan, waits for developer
+approval, implements with tests, validates the committed diff, opens a GitHub PR,
+and moves the issue to In Review.
+
+Linear reads, comments, and status transitions are handled by the plugin-local
+`gwp-linear-ops` skill over the bundled Linear MCP server.
+
+## Boundaries
+
+- Do not use Codex cloud agents for this workflow.
+- Do not assign Linear issues to `@Codex` as the trigger.
+- Do not move Linear issues to Done before the linked PR is merged.
+- Do not create a PR unless tests, lint, typecheck, build, and internal
+  validation all pass.

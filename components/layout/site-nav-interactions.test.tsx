@@ -11,16 +11,24 @@ describe("site nav interactions", () => {
     vi.clearAllMocks();
   });
 
-  it("loads signed-in profile initials", async () => {
+  function mockBrowserSession(session: unknown, error: unknown = null) {
     vi.mocked(supabaseBrowser.auth.getSession).mockResolvedValueOnce({
-      data: { session: { user: { id: "user_1", email: "alex@example.com" } } },
-      error: null,
-    });
-    vi.mocked(supabaseBrowser.from).mockReturnValueOnce({
+      data: { session },
+      error,
+    } as never);
+  }
+
+  function mockProfileInitials(initials: string) {
+    (vi.mocked(supabaseBrowser.from) as any).mockReturnValueOnce({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
-      maybeSingle: vi.fn().mockResolvedValue({ data: { display_initials: "AL" }, error: null }),
+      maybeSingle: vi.fn().mockResolvedValue({ data: { display_initials: initials }, error: null }),
     });
+  }
+
+  it("loads signed-in profile initials", async () => {
+    mockBrowserSession({ user: { id: "user_1", email: "alex@example.com" } });
+    mockProfileInitials("AL");
 
     render(<SiteNav />);
 
@@ -44,10 +52,7 @@ describe("site nav interactions", () => {
   });
 
   it("clears a stale invalid refresh token during auth bootstrap", async () => {
-    vi.mocked(supabaseBrowser.auth.getSession).mockResolvedValueOnce({
-      data: { session: null },
-      error: { message: "Invalid Refresh Token: Refresh Token Not Found" },
-    });
+    mockBrowserSession(null, { message: "Invalid Refresh Token: Refresh Token Not Found" });
 
     render(<SiteNav />);
 
@@ -59,9 +64,9 @@ describe("site nav interactions", () => {
 
   it("shows a sign-in error from Supabase", async () => {
     vi.mocked(supabaseBrowser.auth.signInWithPassword).mockResolvedValueOnce({
-      data: { session: null },
+      data: { user: null, session: null },
       error: { message: "Invalid login credentials" },
-    });
+    } as never);
 
     render(<SiteNav />);
     await userEvent.click(screen.getByRole("button", { name: "Sign up / Log in" }));
@@ -74,9 +79,9 @@ describe("site nav interactions", () => {
 
   it("shows signup email confirmation message", async () => {
     vi.mocked(supabaseBrowser.auth.signUp).mockResolvedValueOnce({
-      data: { session: null },
+      data: { user: null, session: null },
       error: null,
-    });
+    } as never);
 
     render(<SiteNav />);
     await userEvent.click(screen.getByRole("button", { name: "Sign up / Log in" }));
@@ -89,15 +94,8 @@ describe("site nav interactions", () => {
   });
 
   it("signs out an authenticated user", async () => {
-    vi.mocked(supabaseBrowser.auth.getSession).mockResolvedValueOnce({
-      data: { session: { user: { id: "user_1", email: "alex@example.com" } } },
-      error: null,
-    });
-    vi.mocked(supabaseBrowser.from).mockReturnValueOnce({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      maybeSingle: vi.fn().mockResolvedValue({ data: { display_initials: "AL" }, error: null }),
-    });
+    mockBrowserSession({ user: { id: "user_1", email: "alex@example.com" } });
+    mockProfileInitials("AL");
 
     render(<SiteNav />);
     await userEvent.click(await screen.findByRole("button", { name: "AL" }));
