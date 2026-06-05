@@ -20,5 +20,9 @@ the installed plugin root.
 The doctor is read-only with respect to source files and Linear. It must not
 change Linear status, create branches, edit files, commit, push, or create PRs.
 
+The helper runs the full required verification gate (`npm test`, `npm run lint`,
+`npm run typecheck`, and `npm run build`), so expect it to take about as long as
+a normal pre-PR verification run.
+
 Treat failures as blockers for work mode unless the workflow spec explicitly
 allows developer-approved risk.

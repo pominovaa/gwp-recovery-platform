@@ -1,5 +1,7 @@
 Linear issue: GWP-XX
 
+Part of GWP-XX
+
 ## Summary
 - 
 
@@ -19,7 +21,7 @@ Linear issue: GWP-XX
 - N/A
 
 ## Risk Notes
-- None identified
+- Pending validation.
 
 ## Follow-ups
 - None

@@ -22,6 +22,51 @@ For explain, review, or plan-only requests, stay read-only: fetch the issue,
 inspect the repo, and produce the plan without changing Linear status, creating
 a branch, editing files, committing, pushing, or creating a PR.
 
+## Mode Selection
+
+Default to read-only explain or plan mode unless the request contains all of:
+
+1. Explicit invocation of this workflow or an unmistakable request to use it.
+2. An implementation verb such as `work on`, `implement`, or `build`.
+3. A valid Linear issue ID like `GWP-26`.
+
+If the request is ambiguous, fetch/read only what is needed to explain the issue
+and ask the developer to confirm before entering work mode.
+
+## Resume Mode
+
+Before creating a branch or PR for an issue, detect existing work for that issue:
+
+1. Check local branches for the issue ID case-insensitively.
+2. Check remote branches for the issue ID case-insensitively.
+3. Check open GitHub PRs for the issue ID.
+4. Read Linear comments for a previously posted approved plan and acceptance criteria.
+
+If multiple local branches, remote branches, or PRs could apply, ask the
+developer which one to continue. If an approved-plan comment exists, use it as
+the source of truth instead of re-planning. If no approved-plan comment exists,
+run the planning phase again.
+
+## Required Preflight
+
+Before changing Linear status, creating a branch, editing files, committing,
+pushing, or creating a PR, verify:
+
+1. `origin` points to `olena-ageyeva/gwp-recovery-platform`.
+2. The workflow targets the upstream repository, not an unrelated fork.
+3. The worktree is clean, or the developer explicitly approves continuing with existing changes.
+4. The current branch is not `main` before implementation commits are made.
+5. Local `main` is fresh enough to branch from, or `git pull` on `main` succeeds.
+6. The Linear issue exists and belongs to the expected GWP team/project scope.
+7. Linear MCP is configured and authenticated.
+8. GitHub authentication is available for PR creation.
+9. The developer can push a branch to the upstream repository.
+10. The native Linear GitHub integration is installed for the upstream repository, when observable.
+11. `npm test`, `npm run lint`, `npm run typecheck`, and `npm run build` are defined and runnable.
+
+If upstream push access fails, stop and report the failure. Continue with a
+fork-based PR only after the developer explicitly approves that fallback.
+
 ## Required Workflow
 
 1. Parse the Linear issue ID from the user request.
@@ -30,7 +75,7 @@ a branch, editing files, committing, pushing, or creating a PR.
 4. Read title, description, comments, labels, priority, status, and acceptance criteria.
 5. If issue status is not `Todo`, warn the developer and ask whether to continue.
 6. If the issue is `Backlog`, `Canceled`, or `Duplicate`, stop unless the developer explicitly overrides.
-7. Run required preflight checks: clean or approved worktree, Linear MCP auth, GitHub auth, upstream push access, required npm scripts, and native Linear GitHub integration status when observable.
+7. Run the required preflight checklist above.
 8. Use `gwp-linear-ops` to resolve the issue team's workflow state IDs before changing Linear status. Never hardcode Linear state IDs.
 9. Use `gwp-linear-ops` to move the Linear issue to `In Progress` only after issue, repository, and preflight are confirmed.
 10. Create a branch from fresh `main` with the issue ID in the name.

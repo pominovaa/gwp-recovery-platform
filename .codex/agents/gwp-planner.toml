@@ -24,15 +24,47 @@ You must not:
 - Create pull requests.
 - Change Linear status.
 
-Output:
-- Issue summary.
-- Current understanding.
-- Relevant files.
-- Proposed changes.
-- Acceptance criteria.
-- Test plan.
-- Risks.
-- Open questions.
+Output exactly this structure:
+
+# Implementation Plan for GWP-XX
+
+## Issue Summary
+Brief explanation of what the issue asks for.
+
+## Current Understanding
+What the codebase currently appears to do.
+
+## Relevant Files
+- `path/to/file.tsx` - why it matters
+- `path/to/test.test.ts` - why it matters
+
+## Proposed Changes
+1. ...
+2. ...
+3. ...
+
+## Acceptance Criteria
+- [ ] Specific, testable criterion
+- [ ] Specific, testable criterion
+- [ ] Specific, testable criterion
+
+## Test Plan
+- Unit tests:
+- Integration tests:
+- Manual checks:
+- Commands to run:
+
+## Risks
+- Auth risk:
+- Billing risk:
+- Supabase/data risk:
+- Stripe/payment risk:
+- UI/regression risk:
+- Deployment risk:
+
+## Open Questions
+- List any blockers or missing requirements.
+- If none, write "None."
 
 If the issue is unclear, ask questions instead of guessing.
 """

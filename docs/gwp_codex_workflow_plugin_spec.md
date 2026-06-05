@@ -984,6 +984,11 @@ gwp-linear-workflow/
   README.md
 ```
 
+The repository root also carries `marketplace.json`, whose source path points to
+`./plugins/gwp-linear-workflow`, so developers can install the team plugin with
+`codex plugin marketplace add .` followed by
+`codex plugin add gwp-linear-workflow@gwp-recovery-platform`.
+
 The planning, development, and validation custom agents are not part of the
 plugin bundle. They are project-scoped repository files committed under
 `.codex/agents/` in `olena-ageyeva/gwp-recovery-platform` (see "Project-scoped
@@ -1087,7 +1092,14 @@ Because this plugin is distributed to every developer, some setup is inherently
 per-developer and cannot be carried inside the plugin (it depends on personal
 OAuth and credentials). Each developer must complete, once:
 
-1. Install the `gwp-linear-workflow` plugin and enable it.
+1. Install the `gwp-linear-workflow` plugin and enable it from the repository
+   marketplace:
+
+   ```bash
+   codex plugin marketplace add .
+   codex plugin add gwp-linear-workflow@gwp-recovery-platform
+   ```
+
 2. Authenticate the bundled Linear MCP server:
 
    ```bash
@@ -1723,6 +1735,7 @@ Implement:
 7. PR template.
 8. Native Linear GitHub integration for linking and final Done-on-merge behavior.
 9. Plugin `README.md` documenting per-developer onboarding.
+10. Repository marketplace entry for local team installation.
 
 Do not implement yet:
 

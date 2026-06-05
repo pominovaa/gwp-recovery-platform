@@ -2,22 +2,43 @@
 from __future__ import annotations
 
 import json
+import shlex
 import subprocess
+import tomllib
 from pathlib import Path
 
 
 ROOT = Path.cwd()
 EXPECTED_REMOTE = "github.com/olena-ageyeva/gwp-recovery-platform"
 REQUIRED_SCRIPTS = ["test", "lint", "typecheck", "build"]
-REQUIRED_AGENTS = [
-    ROOT / ".codex" / "agents" / "gwp-planner.toml",
-    ROOT / ".codex" / "agents" / "gwp-developer.toml",
-    ROOT / ".codex" / "agents" / "gwp-validator.toml",
+REQUIRED_COMMANDS = [
+    ["npm", "test"],
+    ["npm", "run", "lint"],
+    ["npm", "run", "typecheck"],
+    ["npm", "run", "build"],
 ]
+REQUIRED_AGENTS = {
+    "gwp-planner.toml": {"name": "gwp_planner", "sandbox_mode": "read-only"},
+    "gwp-developer.toml": {"name": "gwp_developer"},
+    "gwp-validator.toml": {"name": "gwp_validator", "sandbox_mode": "read-only"},
+}
 
 
-def run(command: list[str]) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(command, cwd=ROOT, text=True, capture_output=True, check=False)
+def run(command: list[str], timeout: int = 600) -> subprocess.CompletedProcess[str]:
+    # Match an interactive shell closely enough that Codex and gh find the same auth/config.
+    command_text = (
+        'if ! command -v npm >/dev/null 2>&1 && [ -s "$HOME/.nvm/nvm.sh" ]; '
+        'then . "$HOME/.nvm/nvm.sh"; fi; '
+        + shlex.join(command)
+    )
+    return subprocess.run(
+        ["bash", "-lc", command_text],
+        cwd=ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+        timeout=timeout,
+    )
 
 
 def ok(label: str, detail: str = "") -> tuple[bool, str, str]:
@@ -28,29 +49,36 @@ def fail(label: str, detail: str = "") -> tuple[bool, str, str]:
     return False, label, detail
 
 
+def compact_output(result: subprocess.CompletedProcess[str]) -> str:
+    output = (result.stdout + result.stderr).strip()
+    return output[-1200:] if len(output) > 1200 else output
+
+
 def check_remote() -> tuple[bool, str, str]:
     result = run(["git", "remote", "get-url", "origin"])
     remote = result.stdout.strip()
     if result.returncode == 0 and EXPECTED_REMOTE in remote:
         return ok("git remote", remote)
-    return fail("git remote", remote or result.stderr.strip())
+    return fail("git remote", remote or compact_output(result))
 
 
 def check_linear_mcp() -> tuple[bool, str, str]:
     result = run(["codex", "mcp", "list"])
     output = result.stdout + result.stderr
-    if result.returncode == 0 and "linear" in output and "enabled" in output:
-        auth = "OAuth" if "OAuth" in output else "auth status not confirmed by subprocess"
-        return ok("Linear MCP", f"linear enabled; {auth}")
-    return fail("Linear MCP", output.strip())
+    has_linear = "linear" in output and "enabled" in output
+    has_oauth = "OAuth" in output
+    if result.returncode == 0 and has_linear and has_oauth:
+        return ok("Linear MCP", "linear enabled with OAuth")
+    if result.returncode == 0 and has_linear:
+        return fail("Linear MCP", "linear is enabled, but OAuth auth was not confirmed")
+    return fail("Linear MCP", compact_output(result))
 
 
 def check_gh_auth() -> tuple[bool, str, str]:
     result = run(["gh", "auth", "status"])
-    output = result.stdout + result.stderr
     if result.returncode == 0:
         return ok("GitHub CLI auth", "gh auth status passed")
-    return fail("GitHub CLI auth", output.strip())
+    return fail("GitHub CLI auth", compact_output(result))
 
 
 def check_package_scripts() -> tuple[bool, str, str]:
@@ -65,11 +93,49 @@ def check_package_scripts() -> tuple[bool, str, str]:
     return ok("npm scripts", ", ".join(REQUIRED_SCRIPTS))
 
 
+def check_verification_commands() -> tuple[bool, str, str]:
+    failures: list[str] = []
+    for command in REQUIRED_COMMANDS:
+        result = run(command)
+        if result.returncode != 0:
+            failures.append(f"{shlex.join(command)} failed:\n{compact_output(result)}")
+
+    if failures:
+        return fail("verification commands", "\n\n".join(failures))
+    return ok("verification commands", "npm test, lint, typecheck, and build passed")
+
+
 def check_agents() -> tuple[bool, str, str]:
-    missing = [str(path) for path in REQUIRED_AGENTS if not path.exists()]
-    if missing:
-        return fail("project agents", "missing: " + ", ".join(missing))
-    return ok("project agents", ".codex/agents files found")
+    agent_root = ROOT / ".codex" / "agents"
+    failures: list[str] = []
+
+    for filename, expected in REQUIRED_AGENTS.items():
+        path = agent_root / filename
+        if not path.exists():
+            failures.append(f"missing {path}")
+            continue
+
+        try:
+            data = tomllib.loads(path.read_text())
+        except tomllib.TOMLDecodeError as error:
+            failures.append(f"{path} is invalid TOML: {error}")
+            continue
+
+        for key in ["name", "description", "developer_instructions"]:
+            if key not in data:
+                failures.append(f"{path} missing {key}")
+
+        for key, value in expected.items():
+            if data.get(key) != value:
+                failures.append(f"{path} expected {key}={value!r}, found {data.get(key)!r}")
+
+    if failures:
+        return fail("project agents", "; ".join(failures))
+
+    return ok(
+        "project agents",
+        "agent files are present and valid TOML; confirm repo trust in Codex UI/IDE",
+    )
 
 
 def main() -> int:
@@ -78,6 +144,7 @@ def main() -> int:
         check_linear_mcp(),
         check_gh_auth(),
         check_package_scripts(),
+        check_verification_commands(),
         check_agents(),
     ]
 

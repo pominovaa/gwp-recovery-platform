@@ -1,0 +1,20 @@
+{
+  "name": "gwp-recovery-platform",
+  "interface": {
+    "displayName": "GWP Recovery Platform"
+  },
+  "plugins": [
+    {
+      "name": "gwp-linear-workflow",
+      "source": {
+        "source": "local",
+        "path": "./plugins/gwp-linear-workflow"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

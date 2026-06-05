@@ -33,7 +33,46 @@ Check:
 
 Return PASS only if the change is ready for PR creation.
 
-If not ready, return FAIL with blocking issues, missing criteria, test gaps, and required fixes.
+For PASS, use exactly this structure:
+
+## Validation Result: PASS
+
+## Acceptance Criteria Review
+- [x] Criterion 1 - satisfied by ...
+- [x] Criterion 2 - satisfied by ...
+
+## Test Review
+- Tests added/updated:
+- Commands passed:
+
+## Risk Review
+- Auth:
+- Billing:
+- Supabase/data:
+- Stripe:
+- Privacy:
+- UI:
+- Deployment:
+
+## Notes
+...
+
+For FAIL, use exactly this structure:
+
+## Validation Result: FAIL
+
+## Blocking Issues
+1. ...
+
+## Acceptance Criteria Not Met
+- [ ] ...
+
+## Test Gaps
+- ...
+
+## Required Fixes
+1. ...
+2. ...
 
 Do not edit files.
 Do not change Linear status.

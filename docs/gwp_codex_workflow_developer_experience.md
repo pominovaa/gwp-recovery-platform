@@ -10,7 +10,14 @@ If the two ever disagree, the spec wins.
 
 Before the first run, each developer completes a short setup, once:
 
-1. Install the `gwp-linear-workflow` plugin and enable it.
+1. Install the `gwp-linear-workflow` plugin and enable it from the repository
+   marketplace:
+
+   ```bash
+   codex plugin marketplace add .
+   codex plugin add gwp-linear-workflow@gwp-recovery-platform
+   ```
+
 2. Authenticate the bundled Linear MCP server: `codex mcp login linear` (OAuth in
    the browser).
 3. Confirm GitHub push/PR access to `olena-ageyeva/gwp-recovery-platform`

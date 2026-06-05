@@ -33,6 +33,25 @@ cycles unless the developer explicitly asks for that separate Linear task.
 5. Update issue status only when the parent `gwp-linear-to-pr` workflow says the gate for that transition has passed.
 6. Create Linear comments only when the workflow requires a durable artifact, such as the approved plan or final PR summary.
 
+## Transition Gates
+
+Move `Todo` to `In Progress` only after the parent workflow confirms:
+
+- The issue was fetched successfully.
+- The repository is `olena-ageyeva/gwp-recovery-platform`.
+- The issue is in scope for the GWP workflow.
+- The developer intentionally asked Codex to work on the issue.
+- Required preflight checks passed.
+
+Move `In Progress` to `In Review` only after the parent workflow confirms:
+
+- The implementation plan was approved.
+- Development is complete.
+- Tests were added or updated where appropriate.
+- `npm test`, `npm run lint`, `npm run typecheck`, and `npm run build` passed.
+- Internal validation passed.
+- A GitHub PR was created successfully.
+
 ## Workflow State Resolution
 
 Linear workflow state names are team-scoped labels, not stable global IDs.

@@ -8,22 +8,31 @@ The canonical workflow specification lives in the repository at
 
 ## One-Time Developer Setup
 
-1. Install and enable this plugin.
-2. Authenticate Linear:
+Run these commands from the repository root after cloning or pulling the setup
+PR:
+
+```bash
+codex plugin marketplace add .
+codex plugin add gwp-linear-workflow@gwp-recovery-platform
+```
+
+Then complete the personal authentication steps:
+
+1. Authenticate Linear:
 
 ```bash
 codex mcp login linear
 ```
 
-3. Authenticate GitHub CLI with upstream push and PR permissions:
+2. Authenticate GitHub CLI with upstream push and PR permissions:
 
 ```bash
 gh auth status
 ```
 
-4. Trust the GWP Recovery Platform repository in Codex so project-scoped agents
+3. Trust the GWP Recovery Platform repository in Codex so project-scoped agents
    under `.codex/agents/*.toml` are loaded.
-5. Run the `gwp-doctor` skill from the repository root.
+4. Run the `gwp-doctor` skill from the repository root.
 
 The plugin bundles its own GWP-specific Linear operations skill
 (`gwp-linear-ops`), so developers do not need to separately install the
