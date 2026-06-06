@@ -6,13 +6,20 @@ Platform Linear issues and opening GitHub pull requests.
 The canonical workflow specification lives in the repository at
 `docs/gwp_codex_workflow_plugin_spec.md`.
 
+For step-by-step user instructions, see
+`docs/gwp_codex_workflow_user_walkthrough.md`.
+
 ## One-Time Developer Setup
 
 Run these commands from the repository root after cloning or pulling the setup
-PR:
+PR. Each command is in its own fenced block so Markdown viewers can show a copy
+button and copied text can be pasted directly into the terminal.
 
 ```bash
 codex plugin marketplace add ./
+```
+
+```bash
 codex plugin add gwp-linear-workflow@gwp-recovery-platform
 ```
 
@@ -32,7 +39,11 @@ gh auth status
 
 3. Trust the GWP Recovery Platform repository in Codex so project-scoped agents
    under `.codex/agents/*.toml` are loaded.
-4. Run the `gwp-doctor` skill from the repository root.
+4. Run the workflow doctor from the repository root:
+
+```bash
+python3 plugins/gwp-linear-workflow/scripts/gwp_doctor.py
+```
 
 The plugin bundles its own GWP-specific Linear operations skill
 (`gwp-linear-ops`), so developers do not need to separately install the
@@ -43,7 +54,7 @@ standalone Linear skill. Each developer still needs personal Linear OAuth.
 From the repository root, ask Codex:
 
 ```text
-$gwp-linear-to-pr Work on Linear issue GWP-26
+gwp-linear-to-pr Work on Linear issue GWP-26
 ```
 
 The workflow fetches the issue, runs preflight, moves the issue to In Progress,
