@@ -149,6 +149,28 @@ The workflow should:
 5. Create a branch whose name includes the Linear issue ID.
 6. Produce an implementation plan and acceptance criteria.
 
+To resume interrupted work, enter:
+
+```text
+gwp-linear-to-pr resume workflow for GWP-XX
+```
+
+For the current smoke test, enter:
+
+```text
+gwp-linear-to-pr resume workflow for GWP-36
+```
+
+To monitor an existing PR for new review comments, enter:
+
+```text
+gwp-linear-to-pr monitor PR comments for GWP-XX
+```
+
+The resume workflow infers the current stage from Linear comments, local and
+remote branches, commits, and any open GitHub PR. If an open PR exists, Codex
+enters PR review-monitor mode instead of creating a new branch or PR.
+
 ## 8. Review and approve the plan
 
 Codex must stop after producing the plan. Read the plan carefully before
@@ -259,6 +281,46 @@ After PR creation, Codex moves the Linear issue to `In Review`.
 
 Codex must not move a Linear issue to `Done`. `Done` means the PR was merged.
 
+## 12. Monitor PR feedback
+
+After PR creation, Codex monitors PR feedback every 10 minutes while the current
+Codex session remains active. This is not a background service; if the Codex
+session ends, monitoring stops until you resume it.
+
+To resume monitoring later, enter:
+
+```text
+gwp-linear-to-pr resume workflow for GWP-XX
+```
+
+Codex checks top-level PR comments, review submissions, and inline review
+threads. It triages all new comments, including bot/agent comments.
+
+If a comment is informational only, Codex records that it was handled and keeps
+monitoring. If a comment may require changes, Codex presents a follow-up plan and
+waits for approval before editing code.
+
+Approved PR-feedback changes follow the same gate as the original work:
+
+```bash
+npm test
+```
+
+```bash
+npm run lint
+```
+
+```bash
+npm run typecheck
+```
+
+```bash
+npm run build
+```
+
+Codex then validates the committed diff, pushes the updated branch only after
+validation passes, records a Linear checkpoint, and continues monitoring.
+
 ## Smoke-test checklist
 
 For `GWP-36`, confirm these observations:
@@ -273,6 +335,8 @@ For `GWP-36`, confirm these observations:
    validation, risk notes, screenshots or preview notes, and follow-ups.
 8. Linear issue moves to `In Review` after PR creation.
 9. Linear-GitHub integration links the PR to the issue.
+10. Resume mode detects PR #7 and the unresolved Copilot review thread.
+11. A PR-feedback follow-up plan is presented before any code changes.
 
 Do not merge the sample smoke-test PR into `main`. Close or discard it after
 inspection unless the team decides the content change should be kept.
@@ -284,6 +348,7 @@ inspection unless the team decides the content change should be kept.
 - Do not commit directly to `main`.
 - Do not create a PR while any required command is failing.
 - Do not create a PR while internal validation is failing.
+- Do not apply PR-review feedback before approving a follow-up plan.
 - Do not change auth, billing, Stripe, Supabase, privacy, or user-data behavior
   unless that scope is explicitly approved.
 - Never commit `.env`, `.env.local`, `.env.production`, `.env.*.local`, private

@@ -31,7 +31,7 @@ cycles unless the developer explicitly asks for that separate Linear task.
 3. Read issue title, description, status, team, labels, priority, comments, and existing acceptance criteria.
 4. Resolve workflow statuses from the issue's team before any status update.
 5. Update issue status only when the parent `gwp-linear-to-pr` workflow says the gate for that transition has passed.
-6. Create Linear comments only when the workflow requires a durable artifact, such as the approved plan or final PR summary.
+6. Create Linear comments only when the workflow requires a durable artifact, such as the approved plan, PR-created summary, review-monitor checkpoint, follow-up implementation checkpoint, or final PR summary.
 
 ## Transition Gates
 
@@ -108,6 +108,35 @@ Final PR comments should include:
 - Verification command results.
 - Validation result.
 - Any follow-ups.
+
+PR-created checkpoint comments should include:
+
+- Linear issue ID.
+- Branch name.
+- PR URL and PR number.
+- Base branch.
+- Verification command results.
+- Validation result.
+- Linear status after PR creation.
+
+Review-monitor checkpoint comments should include:
+
+- Linear issue ID.
+- PR URL and PR number.
+- Poll timestamp.
+- GitHub comment, review, review-thread, and review-thread-comment IDs already handled.
+- Summary of comments triaged as informational.
+- Summary of comments that produced an approved follow-up plan, if any.
+
+Follow-up implementation checkpoint comments should include:
+
+- Linear issue ID.
+- PR URL and PR number.
+- GitHub feedback IDs addressed.
+- Approved follow-up plan.
+- Commit SHA.
+- Verification command results.
+- Validation result.
 
 ## Failure Behavior
 

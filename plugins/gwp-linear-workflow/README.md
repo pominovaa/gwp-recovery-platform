@@ -1,7 +1,8 @@
 # GWP Linear Workflow Plugin
 
 This plugin packages the local Codex workflow for implementing GWP Recovery
-Platform Linear issues and opening GitHub pull requests.
+Platform Linear issues, opening GitHub pull requests, resuming interrupted
+workflows, and monitoring PR feedback while a Codex session is active.
 
 The canonical workflow specification lives in the repository at
 `docs/gwp_codex_workflow_plugin_spec.md`.
@@ -60,7 +61,24 @@ gwp-linear-to-pr Work on Linear issue GWP-26
 The workflow fetches the issue, runs preflight, moves the issue to In Progress,
 creates an issue branch, produces a read-only plan, waits for developer
 approval, implements with tests, validates the committed diff, opens a GitHub PR,
-and moves the issue to In Review.
+moves the issue to In Review, and monitors PR comments every 10 minutes while
+the Codex session remains active.
+
+To resume interrupted work or continue from an open PR, ask Codex:
+
+```text
+gwp-linear-to-pr resume workflow for GWP-26
+```
+
+To monitor an existing PR for new feedback without starting a new issue branch,
+ask Codex:
+
+```text
+gwp-linear-to-pr monitor PR comments for GWP-26
+```
+
+When new PR feedback may require code changes, Codex produces a follow-up plan
+and waits for approval before editing, committing, pushing, or updating the PR.
 
 Linear reads, comments, and status transitions are handled by the plugin-local
 `gwp-linear-ops` skill over the bundled Linear MCP server.
@@ -72,3 +90,4 @@ Linear reads, comments, and status transitions are handled by the plugin-local
 - Do not move Linear issues to Done before the linked PR is merged.
 - Do not create a PR unless tests, lint, typecheck, build, and internal
   validation all pass.
+- Do not apply PR-review feedback without developer approval of a follow-up plan.
