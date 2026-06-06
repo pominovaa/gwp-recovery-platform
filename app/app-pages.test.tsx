@@ -19,7 +19,10 @@ describe("app routes", () => {
   });
 
   it("renders find help route", () => {
-    expect(renderToStaticMarkup(<FindHelpRoute />)).toContain("Urgent help comes first.");
+    const html = renderToStaticMarkup(<FindHelpRoute />);
+
+    expect(html).toContain("Urgent help comes first.");
+    expect(html).toContain("This resource hub is a starting point for finding support.");
   });
 
   it("renders heal route", () => {

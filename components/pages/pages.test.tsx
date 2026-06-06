@@ -4,7 +4,11 @@ import { FindHelpPage, GivePage, HealPage, LivePage, StoriesPage } from "@/compo
 
 describe("content pages", () => {
   it("renders find help page", () => {
-    expect(renderToStaticMarkup(<FindHelpPage />)).toContain("Urgent help comes first.");
+    const html = renderToStaticMarkup(<FindHelpPage />);
+
+    expect(html).toContain("Urgent help comes first.");
+    expect(html).toContain("This resource hub is a starting point for finding support.");
+    expect(html).toContain("does not provide medical, psychiatric, nutrition, or treatment advice.");
   });
 
   it("renders heal page", () => {
