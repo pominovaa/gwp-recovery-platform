@@ -12,7 +12,7 @@ Run these commands from the repository root after cloning or pulling the setup
 PR:
 
 ```bash
-codex plugin marketplace add .
+codex plugin marketplace add ./
 codex plugin add gwp-linear-workflow@gwp-recovery-platform
 ```
 

@@ -984,9 +984,10 @@ gwp-linear-workflow/
   README.md
 ```
 
-The repository root also carries `marketplace.json`, whose source path points to
-`./plugins/gwp-linear-workflow`, so developers can install the team plugin with
-`codex plugin marketplace add .` followed by
+The repository also carries `.agents/plugins/marketplace.json`, whose source path
+points to `./plugins/gwp-linear-workflow` from the repository root, so developers
+can install the team plugin with
+`codex plugin marketplace add ./` followed by
 `codex plugin add gwp-linear-workflow@gwp-recovery-platform`.
 
 The planning, development, and validation custom agents are not part of the
@@ -1096,7 +1097,7 @@ OAuth and credentials). Each developer must complete, once:
    marketplace:
 
    ```bash
-   codex plugin marketplace add .
+   codex plugin marketplace add ./
    codex plugin add gwp-linear-workflow@gwp-recovery-platform
    ```
 

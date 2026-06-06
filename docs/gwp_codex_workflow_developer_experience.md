@@ -14,7 +14,7 @@ Before the first run, each developer completes a short setup, once:
    marketplace:
 
    ```bash
-   codex plugin marketplace add .
+   codex plugin marketplace add ./
    codex plugin add gwp-linear-workflow@gwp-recovery-platform
    ```
 
