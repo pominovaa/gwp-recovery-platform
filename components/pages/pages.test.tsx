@@ -11,7 +11,9 @@ describe("content pages", () => {
     const html = renderToStaticMarkup(<HealPage />);
 
     expect(html).toContain("Support for the hard days.");
-    expect(html).toContain("border border-stone-200");
+    expect(html).toContain("mx-auto mb-10 max-w-3xl text-center");
+    expect(html).toContain("bg-white/80");
+    expect(html).toContain("flex h-12 w-12 items-center justify-center rounded-2xl bg-stone-100");
   });
 
   it("renders live page", () => {
