@@ -26,3 +26,14 @@ a normal pre-PR verification run.
 
 Treat failures as blockers for work mode unless the workflow spec explicitly
 allows developer-approved risk.
+
+## GitHub CLI sandbox note
+
+If `gh auth status` fails inside Codex with `token is invalid`, `no oauth token
+found`, network, or keyring-related output, do not assume the developer's GitHub
+login is broken. Codex sandboxes may not be able to access keyring-backed `gh`
+credentials or the network.
+
+Before telling the developer to run `gh auth login`, rerun the GitHub CLI check
+outside the sandbox / with command escalation. Treat the failure as real only if
+the outside-sandbox check also fails.

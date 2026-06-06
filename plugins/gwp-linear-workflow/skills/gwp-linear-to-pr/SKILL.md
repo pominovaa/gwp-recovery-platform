@@ -64,6 +64,27 @@ pushing, or creating a PR, verify:
 10. The native Linear GitHub integration is installed for the upstream repository, when observable.
 11. `npm test`, `npm run lint`, `npm run typecheck`, and `npm run build` are defined and runnable.
 
+### GitHub CLI sandbox handling
+
+Codex sessions may run shell commands in a restricted sandbox that cannot access
+the desktop keyring or network. In that state, `gh auth status` can incorrectly
+report that the active account token is invalid even when the same command works
+in a normal terminal.
+
+When any GitHub CLI command fails with symptoms such as `token is invalid`,
+`no oauth token found`, `Could not resolve host`, network disabled output, or
+keyring access failure:
+
+1. Do not immediately tell the developer to re-authenticate.
+2. Retry the same GitHub CLI check outside the sandbox / with command escalation.
+3. Treat GitHub authentication as valid only if the escalated check passes.
+4. Treat GitHub authentication as blocked only if the escalated check also fails.
+
+Use this retry rule for preflight, push/PR readiness checks, `gh pr create`, and
+any GitHub API calls made through the CLI. Git operations and `gh` may use
+different credential stores, so a successful `git push` does not prove `gh` can
+open a PR.
+
 If upstream push access fails, stop and report the failure. Continue with a
 fork-based PR only after the developer explicitly approves that fallback.
 

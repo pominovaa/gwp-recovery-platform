@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shlex
 import subprocess
 import tomllib
@@ -78,7 +79,28 @@ def check_gh_auth() -> tuple[bool, str, str]:
     result = run(["gh", "auth", "status"])
     if result.returncode == 0:
         return ok("GitHub CLI auth", "gh auth status passed")
-    return fail("GitHub CLI auth", compact_output(result))
+
+    output = compact_output(result)
+    sandbox_network_disabled = os.environ.get("CODEX_SANDBOX_NETWORK_DISABLED") == "1"
+    sandbox_markers = [
+        "token in default is invalid",
+        "no oauth token found",
+        "could not resolve host",
+        "network",
+        "keyring",
+    ]
+    if sandbox_network_disabled or any(marker in output.lower() for marker in sandbox_markers):
+        return fail(
+            "GitHub CLI auth",
+            output
+            + "\n\n"
+            + "This can be a Codex sandbox false negative when gh stores credentials "
+            + "in the desktop keyring or when sandbox network is disabled. Before "
+            + "re-authenticating, rerun `gh auth status` in a normal terminal or ask "
+            + "Codex to retry the GitHub CLI check outside the sandbox. Treat this as "
+            + "a real auth blocker only if the outside-sandbox check also fails.",
+        )
+    return fail("GitHub CLI auth", output)
 
 
 def check_package_scripts() -> tuple[bool, str, str]:

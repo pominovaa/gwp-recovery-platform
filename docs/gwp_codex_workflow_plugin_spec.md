@@ -166,6 +166,13 @@ The preflight must verify:
 10. The native Linear GitHub integration is installed for `olena-ageyeva/gwp-recovery-platform`.
 11. The repository defines runnable `npm test`, `npm run lint`, `npm run typecheck`, and `npm run build` scripts (see "Known repository prerequisites").
 
+GitHub CLI checks must account for Codex sandbox behavior. If `gh auth status`,
+`gh auth token`, `gh pr create`, or a GitHub API command fails inside Codex with
+`token is invalid`, `no oauth token found`, network-disabled output, keyring
+access errors, or host-resolution errors, Codex must retry the same check outside
+the sandbox / with command escalation before reporting a developer auth problem.
+Only the outside-sandbox failure is treated as a real blocker.
+
 If upstream push access fails, Codex must stop and report the failure. The
 developer may then choose either:
 
@@ -1083,6 +1090,12 @@ git remote -v
 gh auth status
 ```
 
+In Codex, `gh` may be unable to access keyring-backed credentials or network from
+the restricted command sandbox. If the first `gh` check fails with token,
+keyring, network, or host-resolution symptoms, Codex must retry the same check
+outside the sandbox / with command escalation. Do not ask the developer to
+re-authenticate unless the outside-sandbox check also fails.
+
 If `gh` is not installed or authenticated, Codex may use another available
 GitHub connector. If no GitHub PR creation mechanism is available, Codex must
 stop before implementation and report the missing setup.
@@ -1621,6 +1634,12 @@ Do not change Linear status.
 ### GitHub authentication or upstream push access fails
 
 Stop and report which check failed.
+
+If the failure came from a GitHub CLI command inside the Codex sandbox, first
+retry the same command outside the sandbox / with command escalation when the
+output mentions invalid token, missing OAuth token, keyring access, disabled
+network, or host-resolution errors. A sandbox-only failure is not enough to tell
+the developer to re-authenticate.
 
 Do not change Linear status, create a branch, edit files, commit, push, or create
 a PR.

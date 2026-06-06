@@ -89,6 +89,13 @@ olena-ageyeva/gwp-recovery-platform
 Being logged into GitHub is not enough by itself. The authenticated account must
 have collaborator access to the upstream repository.
 
+If Codex reports a GitHub CLI auth failure but `gh auth status` passes in your
+normal terminal, treat the Codex result as a sandbox/keyring false negative.
+Codex should retry GitHub CLI checks outside the sandbox before asking you to
+re-authenticate. This can happen because `gh` stores credentials in the desktop
+keyring, while a restricted Codex command sandbox may not be able to read that
+keyring or reach the network.
+
 ## 5. Trust the repository in Codex
 
 Trust this repository in Codex when prompted. The workflow depends on
