@@ -136,7 +136,8 @@ fork-based PR only after the developer explicitly approves that fallback.
 25. Use `gwp-linear-ops` to move the Linear issue to `In Review`.
 26. Use `gwp-linear-ops` to post a PR-created checkpoint comment to Linear.
 27. Enter post-PR review-monitor mode while the current Codex session remains active.
-28. Post a final summary including branch, PR URL, verification commands, validation result, Linear status, and review-monitor state.
+28. Do not send a final response while claiming review monitoring is active.
+29. Post a final summary only when the developer stops monitoring, the session is ending, or the PR is merged. The summary must say whether monitoring is active or stopped and include the resume command.
 
 ## Post-PR Review Monitor
 
@@ -156,13 +157,22 @@ checkpoint.
 
 Monitor behavior:
 
-1. Poll every 10 minutes while the session remains active.
-2. Fetch top-level PR comments, review submissions, and review threads.
-3. Triage all new comments, including bot/agent comments.
-4. Treat resolved or outdated threads as context; do not change code from them unless they contain new comments that require action.
-5. If new comments are informational only, post a Linear review-monitor checkpoint with handled IDs and keep monitoring.
-6. If any new comment may require a change, produce a follow-up implementation plan and ask for developer approval.
-7. Do not edit files, commit, push, reply on GitHub, or resolve GitHub threads before the developer approves the follow-up plan.
+1. Poll immediately when entering monitor mode.
+2. If monitoring continues, keep the Codex turn/session active and poll every 10 minutes.
+3. After every poll, report a brief status update to the developer.
+4. Fetch top-level PR comments, review submissions, and review threads.
+5. Triage all new comments, including bot/agent comments.
+6. Treat resolved or outdated threads as context; do not change code from them unless they contain new comments that require action.
+7. If new comments are informational only, post a Linear review-monitor checkpoint with handled IDs and keep monitoring.
+8. If any new comment may require a change, produce a follow-up implementation plan and ask for developer approval.
+9. Do not edit files, commit, push, reply on GitHub, or resolve GitHub threads before the developer approves the follow-up plan.
+
+Monitor-stop behavior:
+
+- A final assistant response ends active monitoring. Do not imply the timer is still running after a final response.
+- If the developer asks to pause, stop, or wait for later, post a review-monitor checkpoint, say monitoring is stopped, and provide `gwp-linear-to-pr resume workflow for GWP-26`.
+- If the session must end for any other reason, say monitoring is stopped and provide the same resume command.
+- If no active polling loop is running, do not describe monitoring as active.
 
 For approved PR-feedback changes:
 
@@ -172,7 +182,7 @@ For approved PR-feedback changes:
 4. Spawn the `gwp_validator` agent to validate the updated committed diff.
 5. Push the updated branch only after validation returns PASS.
 6. Use `gwp-linear-ops` to post a follow-up implementation checkpoint and a review-monitor checkpoint with handled GitHub IDs.
-7. Continue monitoring every 10 minutes while the session remains active.
+7. Continue monitoring with the same active-loop rules above, or explicitly stop and provide the resume command.
 
 ## Hard Rules
 

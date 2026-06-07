@@ -505,7 +505,29 @@ the original implementation:
 4. Validation Agent reviews the committed diff.
 5. Codex pushes the updated branch only after validation returns PASS.
 6. Codex posts follow-up implementation and review-monitor checkpoints to Linear.
-7. Codex continues the 10-minute review-monitor loop while the session remains active.
+7. Codex continues the 10-minute review-monitor loop while the session remains active, or explicitly stops monitoring and provides the resume command.
+
+### Active monitor contract
+
+The phrase "session-bound monitor" means an active Codex turn/session is still
+running. It does not mean a background timer continues after Codex sends a final
+response.
+
+When Codex enters post-PR review-monitor mode, it must:
+
+1. Poll GitHub immediately.
+2. Keep the turn/session active if it is claiming the 10-minute timer is active.
+3. Poll every 10 minutes while monitoring remains active.
+4. Report a brief status update after each poll.
+5. Avoid sending a final response while implying monitoring is still active.
+
+If Codex ends the turn, is asked to stop, or cannot keep the polling loop active,
+it must post any appropriate review-monitor checkpoint, state that monitoring is
+stopped, and provide:
+
+```text
+gwp-linear-to-pr resume workflow for GWP-26
+```
 
 GitHub review comments are read with the plugin-local helper:
 
@@ -1327,7 +1349,8 @@ a branch, editing files, committing, pushing, or creating a PR.
 30. Enter session-bound PR review-monitor mode.
 31. Poll GitHub PR comments every 10 minutes while the session remains active.
 32. If comments require changes, produce a follow-up plan, wait for approval, update the branch, rerun verification and validation, push, and checkpoint the follow-up.
-33. Post a final summary including branch, PR URL, verification commands, validation, Linear status, and review-monitor state.
+33. Do not send a final response while claiming monitoring is active.
+34. When monitoring stops, say it stopped and provide the resume command.
 
 ## Hard rules
 

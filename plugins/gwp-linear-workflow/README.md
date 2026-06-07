@@ -64,6 +64,9 @@ approval, implements with tests, validates the committed diff, opens a GitHub PR
 moves the issue to In Review, and monitors PR comments every 10 minutes while
 the Codex session remains active.
 
+The monitor is not a background service. If Codex sends a final response, the
+timer is no longer running; resume later with the command below.
+
 To resume interrupted work or continue from an open PR, ask Codex:
 
 ```text

@@ -61,8 +61,8 @@ From there:
 ## After the PR
 
 The workflow no longer stops at PR creation. Once the PR exists, Codex enters a
-session-bound review monitor. It checks GitHub PR feedback every 10 minutes while
-the current Codex session remains active.
+session-bound review monitor. It checks GitHub PR feedback immediately, then
+every 10 minutes while the current Codex session remains active.
 
 Codex reads:
 
@@ -80,8 +80,9 @@ Approved PR-feedback changes go through the same guarded loop as the original
 implementation: Development Agent, required npm commands, commit with the Linear
 issue ID, Validation Agent, push after `PASS`, and Linear follow-up checkpoint.
 
-The monitor is not a background daemon. If the Codex session ends, monitoring
-stops until the developer resumes it.
+The monitor is not a background daemon. A final assistant response means active
+monitoring has stopped. If Codex stops monitoring, it must say so clearly and
+give the resume command.
 
 ## Resuming work
 

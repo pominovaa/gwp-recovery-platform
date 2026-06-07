@@ -283,9 +283,13 @@ Codex must not move a Linear issue to `Done`. `Done` means the PR was merged.
 
 ## 12. Monitor PR feedback
 
-After PR creation, Codex monitors PR feedback every 10 minutes while the current
-Codex session remains active. This is not a background service; if the Codex
-session ends, monitoring stops until you resume it.
+After PR creation, Codex monitors PR feedback every 10 minutes only while the
+current Codex session remains active. This is not a background service. If Codex
+sends a final response, the timer is no longer running.
+
+When monitoring is active, Codex should poll immediately, keep the session open,
+and report a brief status update after every poll. If Codex stops monitoring, it
+must say that monitoring has stopped and give you the resume command.
 
 To resume monitoring later, enter:
 
@@ -319,7 +323,8 @@ npm run build
 ```
 
 Codex then validates the committed diff, pushes the updated branch only after
-validation passes, records a Linear checkpoint, and continues monitoring.
+validation passes, records a Linear checkpoint, and either continues the active
+monitor loop or clearly says monitoring has stopped.
 
 ## Smoke-test checklist
 
