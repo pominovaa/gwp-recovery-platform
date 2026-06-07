@@ -4,7 +4,6 @@ import { SiteFooter } from "@/components/layout/site-footer";
 import { SiteNav } from "@/components/layout/site-nav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { SectionHeader } from "@/components/ui/headers";
 
 const moderationRules = [
   "No names, locations, providers, schools, or identifying details",
@@ -109,9 +108,13 @@ export function HealPage() {
   return (
     <PageFrame>
       <section className="px-5 py-20">
-        <SectionHeader eyebrow="Heal" title="Support for the hard days.">
-          Practical tools for moments when recovery feels loud: coping cards, meal-support reflections, treatment notes, and private journaling without triggering metrics.
-        </SectionHeader>
+        <div className="mx-auto mb-10 max-w-3xl text-center">
+          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-stone-500">Heal</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-stone-950 md:text-5xl">Support for the hard days.</h1>
+          <p className="mt-5 text-lg leading-8 text-stone-600">
+            Practical tools for moments when recovery feels loud: coping cards, meal-support reflections, treatment notes, and private journaling without triggering metrics.
+          </p>
+        </div>
         <div className="mx-auto grid max-w-7xl gap-5 md:grid-cols-3">
           {[
             [Heart, "Meal Support Reflection", "Reflect on distress, emotions, support used, and what helped without calories, weight, portions, or comparison."],
