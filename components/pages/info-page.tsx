@@ -55,6 +55,18 @@ const storyVideos = [
   },
 ];
 
+const reviewedResources = [
+  {
+    name: "Liv Label Free",
+    url: "https://www.livlabelfree.com/",
+    category: "Neurodiversity-affirming ED recovery",
+    audience: "Autistic and neurodivergent people, caregivers, families, and supporters",
+    cost: "Free educational materials and paid coaching or books",
+    description:
+      "Resource site from an autistic eating-disorder recovery coach with lived-experience education, podcast and blog content, books, private coaching, and group coaching.",
+  },
+];
+
 function PageFrame({ children }: { children: React.ReactNode }) {
   return (
     <div id="top" className="min-h-screen bg-[radial-gradient(circle_at_top_left,#f8f3ed,transparent_34%),linear-gradient(180deg,#fffaf4_0%,#ffffff_42%,#f7f7f5_100%)] text-stone-950">
@@ -98,6 +110,38 @@ export function FindHelpPage() {
               </CardContent>
             </Card>
           ))}
+        </div>
+      </section>
+      <section className="px-5 pb-24">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-8 max-w-3xl">
+            <div className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-stone-500">Reviewed Resources</div>
+            <h2 className="text-3xl font-semibold tracking-tight text-stone-950 md:text-4xl">Recovery resources to evaluate with care.</h2>
+            <p className="mt-5 text-base leading-7 text-stone-600">
+              These listings are informational starting points, not endorsements or clinical recommendations. Check fit, credentials, safety, cost, and care needs before engaging with any service.
+            </p>
+          </div>
+          <div className="grid gap-5 lg:grid-cols-2">
+            {reviewedResources.map((resource) => (
+              <Card key={resource.name} className="rounded-[2rem] border-stone-200 bg-white shadow-sm">
+                <CardContent className="p-7">
+                  <div className="mb-4 flex flex-wrap gap-2">
+                    <span className="rounded-full bg-stone-100 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-stone-600">{resource.category}</span>
+                    <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-amber-900">{resource.cost}</span>
+                  </div>
+                  <h3 className="text-2xl font-semibold text-stone-950">{resource.name}</h3>
+                  <p className="mt-3 text-sm font-semibold text-stone-700">Audience: {resource.audience}</p>
+                  <p className="mt-4 leading-7 text-stone-600">{resource.description}</p>
+                  <p className="mt-4 text-sm leading-6 text-stone-500">
+                    GWP does not provide medical care, crisis support, diagnosis, treatment, or guarantees of recovery through this resource.
+                  </p>
+                  <a href={resource.url} target="_blank" rel="noreferrer" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-stone-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-800">
+                    Open resource <ArrowRight className="ml-2 h-5 w-5" />
+                  </a>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </div>
       </section>
     </PageFrame>
