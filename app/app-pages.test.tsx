@@ -23,6 +23,7 @@ describe("app routes", () => {
 
     expect(html).toContain("Urgent help comes first.");
     expect(html).toContain("This resource hub is a starting point for finding support.");
+    expect(html).toContain("not a substitute for emergency services");
   });
 
   it("renders heal route", () => {

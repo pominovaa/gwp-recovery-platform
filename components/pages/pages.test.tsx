@@ -8,7 +8,8 @@ describe("content pages", () => {
 
     expect(html).toContain("Urgent help comes first.");
     expect(html).toContain("This resource hub is a starting point for finding support.");
-    expect(html).toContain("does not provide medical, psychiatric, nutrition, or treatment advice.");
+    expect(html).toContain("not a substitute for emergency services");
+    expect(html).toContain("medical, psychiatric, nutrition, or treatment advice.");
   });
 
   it("renders heal page", () => {
