@@ -1,7 +1,5 @@
 // @ts-nocheck
 import { ArrowRight, BookOpenText, Check, ClipboardList, EyeOff, FileText, Heart, Home, LifeBuoy, ShieldCheck, Users } from "lucide-react";
-import { SiteFooter } from "@/components/layout/site-footer";
-import { SiteNav } from "@/components/layout/site-nav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -55,16 +53,6 @@ const storyVideos = [
   },
 ];
 
-function PageFrame({ children }: { children: React.ReactNode }) {
-  return (
-    <div id="top" className="min-h-screen bg-[radial-gradient(circle_at_top_left,#f8f3ed,transparent_34%),linear-gradient(180deg,#fffaf4_0%,#ffffff_42%,#f7f7f5_100%)] text-stone-950">
-      <SiteNav />
-      <main>{children}</main>
-      <SiteFooter />
-    </div>
-  );
-}
-
 function PageHeader({ eyebrow, title, children }: { eyebrow: string; title: string; children: React.ReactNode }) {
   return (
     <section className="px-5 py-16 md:py-24">
@@ -79,7 +67,7 @@ function PageHeader({ eyebrow, title, children }: { eyebrow: string; title: stri
 
 export function FindHelpPage() {
   return (
-    <PageFrame>
+    <>
       <PageHeader eyebrow="Find Help" title="Urgent help comes first.">
         The free resource hub is designed for immediate direction: emergency warning signs, crisis resources, provider-call prep, and family support basics.
       </PageHeader>
@@ -100,13 +88,13 @@ export function FindHelpPage() {
           ))}
         </div>
       </section>
-    </PageFrame>
+    </>
   );
 }
 
 export function HealPage() {
   return (
-    <PageFrame>
+    <>
       <section className="px-5 py-20">
         <div className="mx-auto mb-10 max-w-3xl text-center">
           <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-stone-500">Heal</p>
@@ -133,13 +121,13 @@ export function HealPage() {
           ))}
         </div>
       </section>
-    </PageFrame>
+    </>
   );
 }
 
 export function LivePage() {
   return (
-    <PageFrame>
+    <>
       <PageHeader eyebrow="Live" title="Recovery is not only about symptoms.">
         It is also about school, family, identity, confidence, routines, and feeling like life can become yours again.
       </PageHeader>
@@ -159,13 +147,13 @@ export function LivePage() {
           ))}
         </div>
       </section>
-    </PageFrame>
+    </>
   );
 }
 
 export function GivePage() {
   return (
-    <PageFrame>
+    <>
       <PageHeader eyebrow="Give" title="Stories that give hope forward.">
         Users can submit anonymous recovery stories, but stories are moderated before publishing to protect privacy and reduce harm.
       </PageHeader>
@@ -199,13 +187,13 @@ export function GivePage() {
           </Card>
         </div>
       </section>
-    </PageFrame>
+    </>
   );
 }
 
 export function StoriesPage() {
   return (
-    <PageFrame>
+    <>
       <section className="px-5 py-10 md:py-16">
         <div className="mx-auto max-w-7xl">
           <section className="rounded-[2.5rem] bg-stone-100 p-7 md:p-12">
@@ -303,6 +291,6 @@ export function StoriesPage() {
           </section>
         </div>
       </section>
-    </PageFrame>
+    </>
   );
 }
