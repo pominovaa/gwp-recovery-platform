@@ -84,6 +84,11 @@ export function FindHelpPage() {
         The free resource hub is designed for immediate direction: emergency warning signs, crisis resources, provider-call prep, and family support basics.
       </PageHeader>
       <section className="px-5 pb-24">
+        <div className="mx-auto mb-5 max-w-7xl rounded-[2rem] border border-stone-200 bg-white p-6 shadow-sm">
+          <p className="text-sm font-medium leading-6 text-stone-700">
+            Support scope: This resource hub is a starting point for finding support. It is not a substitute for emergency services, medical, psychiatric, nutrition, or treatment advice.
+          </p>
+        </div>
         <div className="mx-auto grid max-w-7xl gap-5 md:grid-cols-2">
           {[
             "If there is immediate danger, call emergency services.",
