@@ -3,64 +3,45 @@
 This is a narrative companion to
 [`gwp_codex_workflow_plugin_spec.md`](./gwp_codex_workflow_plugin_spec.md). The
 spec is the canonical source of truth; this document describes the same workflow
-from the developer's point of view so the intended experience is easy to picture.
-If the two ever disagree, the spec wins.
+from the developer's point of view. For copy-ready setup commands, use
+[`gwp_codex_workflow_user_walkthrough.md`](./gwp_codex_workflow_user_walkthrough.md).
 
-## One-time setup (per developer)
+## One-time setup
 
-Before the first run, each developer completes a short setup, once:
+Before the first run, each developer installs the local repository marketplace,
+installs the `gwp-linear-workflow` plugin, authenticates Linear, confirms GitHub
+CLI access to `olena-ageyeva/gwp-recovery-platform`, trusts the repository in
+Codex, and runs the workflow doctor:
 
-1. Install the `gwp-linear-workflow` plugin and enable it from the repository
-   marketplace:
-
-   ```bash
-   codex plugin marketplace add ./
-   codex plugin add gwp-linear-workflow@gwp-recovery-platform
-   ```
-
-2. Authenticate the bundled Linear MCP server: `codex mcp login linear` (OAuth in
-   the browser).
-3. Confirm GitHub push/PR access to `olena-ageyeva/gwp-recovery-platform`
-   (`gh auth status`).
-4. **Trust the repo** in Codex. The shared planning, development, and validation
-   agents live in the repository under `.codex/agents/*.toml`, and Codex only
-   loads a project's `.codex/` layers for trusted projects. Without trust, the
-   multi-agent flow silently degrades to a single session.
-5. Run `gwp-doctor`. It prints a pass/fail checklist — remote is correct, Linear
-   is authenticated, `gh` is ready, the `lint`/`typecheck`/`build` scripts run,
-   and the custom agents are present and loadable in a trusted project. Green
-   means you're ready.
-
-The custom agents themselves are created and committed to the repository **once**,
-as a setup task (see the spec's "Repository setup: create the shared custom
-agents"). After that, every developer inherits them automatically on `git clone`
-— there is no per-developer agent creation.
-
-## The everyday run
-
-The developer opens the repo in Codex and types:
-
-```text
-Work on Linear issue GWP-26
+```bash
+python3 plugins/gwp-linear-workflow/scripts/gwp_doctor.py
 ```
 
-(or invokes the skill explicitly, e.g. `$gwp-linear-to-pr GWP-26`). From there:
+The custom planning, development, and validation agents are committed to the
+repository under `.codex/agents/*.toml`. Developers do not create those agents
+locally; trusting the project lets Codex load them.
 
-1. **Claim.** Codex confirms it is in `olena-ageyeva/gwp-recovery-platform`,
-   fetches GWP-26, runs preflight, resolves the team's "In Progress" workflow
-   state ID, moves the issue, and creates a `gwp-26-…` branch off a fresh `main`.
-   The developer sees the issue flip to **In Progress** in Linear.
-2. **Plan.** The read-only Planning Agent returns an implementation plan plus
-   concrete, testable acceptance criteria into the root session. If it has open
-   questions, those surface to the developer through the root session — the
-   subagent itself never talks to the human directly. The developer reviews the
-   plan in the terminal and types `Approved`.
-3. **Record.** Codex posts the approved plan and acceptance criteria as a comment
-   on the Linear issue, so the team, the eventual PR, and the validation step all
-   share one source of truth.
-4. **Build.** The workspace-write Development Agent implements only the approved
-   plan, adds or updates tests (Vitest + React Testing Library, co-located
-   `*.test.ts(x)`), installs dependencies if needed, and runs the full gate:
+## Starting an issue
+
+The developer opens the repo in Codex and enters:
+
+```text
+gwp-linear-to-pr Work on Linear issue GWP-26
+```
+
+From there:
+
+1. **Claim.** Codex confirms the repo remote, fetches the Linear issue, checks
+   Linear and GitHub auth, resolves Linear workflow states, moves the issue to
+   `In Progress`, and creates a branch containing the issue ID.
+2. **Plan.** The read-only Planning Agent produces an implementation plan,
+   acceptance criteria, test plan, risks, and open questions. The root Codex
+   session shows that plan to the developer.
+3. **Approve.** The developer replies with `Approved` only after the plan is
+   correct. Codex then posts the approved plan and criteria as a Linear
+   checkpoint comment.
+4. **Build.** The Development Agent implements only the approved plan, updates
+   tests for behavior changes, and runs:
 
    ```bash
    npm test
@@ -69,59 +50,102 @@ Work on Linear issue GWP-26
    npm run build
    ```
 
-   It self-repairs up to 3 cycles on failure, then commits to the issue branch
-   with the Linear issue ID in the message
-   (e.g. `GWP-26: implement account recovery flow`).
-5. **Validate.** The read-only Validation Agent reviews the committed diff
-   (`git diff main...HEAD`) against the acceptance criteria and the security
-   checklist (auth, billing, Stripe, Supabase, privacy, secrets) and returns
-   `PASS` or `FAIL`. A `FAIL` loops back to the Development Agent, up to 3 cycles.
-6. **Ship.** Only after `PASS`, Codex pushes the branch to the upstream
-   repository, opens the PR with `gh` (acceptance criteria and verification
-   results in the body), moves the Linear issue to **In Review**, and prints a
-   summary including the branch, the PR URL, and the verification results. The
-   developer clicks through to a PR that is ready for human review.
+5. **Validate.** Codex commits the verified work with the Linear issue ID, then
+   the read-only Validation Agent reviews the committed diff against acceptance
+   criteria, test quality, security-sensitive areas, and required command
+   results.
+6. **Open PR.** Only after validation passes, Codex pushes the branch, opens a
+   GitHub PR, moves the Linear issue to `In Review`, and posts a PR-created
+   checkpoint to Linear.
 
-Throughout, the developer's only required interactions are the initial prompt and
-the single approval step. Everything else is reported back for visibility.
+## After the PR
 
-## Resuming work later
+The workflow no longer stops at PR creation. Once the PR exists, Codex enters a
+session-bound review monitor. It checks GitHub PR feedback every 10 minutes while
+the current Codex session remains active.
 
-Re-invoking the workflow on an issue that already has work detects the existing
-local branch, remote branch, and any open PR before creating anything new, and
-asks the developer which to continue if there are multiple candidates. To restore
-context across sessions, Codex re-reads the approved plan and acceptance criteria
-from the Linear comment posted at approval time rather than re-planning from
-scratch. If no such comment exists, the issue is treated as not yet planned and
-the planning phase runs again.
+Codex reads:
 
-## When something goes wrong
+1. Top-level PR comments.
+2. Review submissions.
+3. Inline review threads and review-thread comments.
 
-The workflow fails safe and tells the developer exactly what happened and what to
-do next:
+All new comments are triaged, including bot or agent comments. Informational
+comments are recorded in a Linear review-monitor checkpoint. Comments that may
+require changes produce a follow-up plan. Codex must wait for developer approval
+before editing files, committing, pushing, replying on GitHub, or resolving
+threads.
 
-- **Auth / preflight fails** (wrong repo, Linear or GitHub auth missing, no push
-  access): Codex stops before changing Linear status or touching the branch.
-- **Verification fails** after 3 repair cycles: Codex stops, leaves the issue in
-  In Progress, and summarizes what was implemented, which command failed, and the
-  error output. No PR is created.
-- **Validation fails** after 3 cycles: same fail-safe behavior — no push, no PR,
-  issue stays In Progress.
-- **PR creation fails**: the branch remains pushed; Codex reports the branch,
-  commit, verification results, validation result, the PR error, and the manual
-  next steps.
+Approved PR-feedback changes go through the same guarded loop as the original
+implementation: Development Agent, required npm commands, commit with the Linear
+issue ID, Validation Agent, push after `PASS`, and Linear follow-up checkpoint.
 
-## Boundaries to keep in mind
+The monitor is not a background daemon. If the Codex session ends, monitoring
+stops until the developer resumes it.
 
-- The issue moving to **In Progress** means only that it has been claimed; the
-  abandon case (plan rejected, work dropped) is handled manually, case by case.
-- Codex never commits directly to `main`, never creates a PR while any gate is
-  failing, and never moves an issue to **Done** — `Done` means the PR was merged,
-  and that transition is left to the native Linear–GitHub integration.
+## Resuming work
 
-## Prerequisite reminder
+The developer can resume from any point with:
 
-The very first run depends on the repository's **Version 0.0 prerequisites** being
-in place: `npm run lint` migrated from the removed `next lint` to the ESLint CLI,
-and an `npm run typecheck` (`tsc --noEmit`) script added. Until those land, the
-lint/typecheck gates cannot pass. See the spec's "Known repository prerequisites".
+```text
+gwp-linear-to-pr resume workflow for GWP-26
+```
+
+or monitor an existing PR with:
+
+```text
+gwp-linear-to-pr monitor PR comments for GWP-26
+```
+
+On resume, Codex inspects Linear comments, local branches, remote branches,
+commits, and GitHub PRs. It infers the current stage:
+
+1. No branch exists: start normal workflow.
+2. Branch exists but no approved-plan checkpoint exists: re-plan and wait for approval.
+3. Approved plan exists but no PR exists: continue implementation or verification.
+4. Open PR exists: enter review-monitor mode.
+5. PR is merged: report merged state and do not move Linear to `Done`.
+
+Linear comments are the durable checkpoint store. They capture the approved plan,
+PR-created state, handled GitHub feedback IDs, and follow-up implementation
+results so a later Codex session can resume without relying on local untracked
+files.
+
+## Current smoke test
+
+For the current GWP-36 smoke-test PR, after reinstalling the updated plugin and
+starting a new Codex thread, the developer runs:
+
+```text
+gwp-linear-to-pr resume workflow for GWP-36
+```
+
+Codex should detect PR #7, find the unresolved Copilot review thread, present a
+follow-up plan to reword the Find Help support-scope note, wait for approval,
+update the PR branch, rerun verification and validation, push the update, and
+continue monitoring.
+
+## Failure behavior
+
+The workflow fails safe:
+
+- **Auth/preflight fails:** Codex stops before Linear status changes or branch
+  work. If `gh` fails only inside the Codex sandbox, Codex retries outside the
+  sandbox before treating it as a real auth failure.
+- **Verification fails:** Codex repairs up to 3 cycles, then stops without PR
+  creation or PR update.
+- **Validation fails:** Codex repairs up to 3 cycles, then stops without push or
+  PR update.
+- **PR creation or update fails:** Codex reports branch, commit, verification,
+  validation, and the exact GitHub error.
+
+## Boundaries
+
+- Codex never commits directly to `main`.
+- Codex never creates or updates a PR while required checks or validation fail.
+- Codex never applies PR-review feedback without developer approval of a
+  follow-up plan.
+- Codex never moves a Linear issue to `Done`; merge completion remains handled
+  by Linear-GitHub integration or humans.
+- Codex never broadens scope into auth, billing, Stripe, Supabase, privacy, or
+  user-data behavior unless explicitly approved.
