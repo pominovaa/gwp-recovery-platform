@@ -161,15 +161,15 @@ For the current smoke test, enter:
 gwp-linear-to-pr resume workflow for GWP-36
 ```
 
-To monitor an existing PR for new review comments, enter:
+To check an existing PR once for new review comments, enter:
 
 ```text
-gwp-linear-to-pr monitor PR comments for GWP-XX
+gwp-linear-to-pr check PR comments for GWP-XX
 ```
 
 The resume workflow infers the current stage from Linear comments, local and
 remote branches, commits, and any open GitHub PR. If an open PR exists, Codex
-enters PR review-monitor mode instead of creating a new branch or PR.
+runs the same one-time PR comment check instead of creating a new branch or PR.
 
 ## 8. Review and approve the plan
 
@@ -281,17 +281,17 @@ After PR creation, Codex moves the Linear issue to `In Review`.
 
 Codex must not move a Linear issue to `Done`. `Done` means the PR was merged.
 
-## 12. Monitor PR feedback
+## 12. Check PR feedback
 
-After PR creation, Codex monitors PR feedback every 10 minutes only while the
-current Codex session remains active. This is not a background service. If Codex
-sends a final response, the timer is no longer running.
+After PR creation, Codex stops cleanly. When you want Codex to inspect PR
+feedback, run a manual one-time check:
 
-When monitoring is active, Codex should poll immediately, keep the session open,
-and report a brief status update after every poll. If Codex stops monitoring, it
-must say that monitoring has stopped and give you the resume command.
+```text
+gwp-linear-to-pr check PR comments for GWP-XX
+```
 
-To resume monitoring later, enter:
+You can also resume the workflow, which performs the same one-time PR comment
+check if an open PR exists:
 
 ```text
 gwp-linear-to-pr resume workflow for GWP-XX
@@ -300,9 +300,10 @@ gwp-linear-to-pr resume workflow for GWP-XX
 Codex checks top-level PR comments, review submissions, and inline review
 threads. It triages all new comments, including bot/agent comments.
 
-If a comment is informational only, Codex records that it was handled and keeps
-monitoring. If a comment may require changes, Codex presents a follow-up plan and
-waits for approval before editing code.
+If no code update is needed for a comment, Codex replies to the original GitHub
+comment explaining why no change is needed and records the handled ID in Linear.
+If a comment may require changes, Codex presents a follow-up plan and waits for
+approval before editing code.
 
 Approved PR-feedback changes follow the same gate as the original work:
 
@@ -323,13 +324,12 @@ npm run build
 ```
 
 Codex then validates the committed diff, pushes the updated branch only after
-validation passes, records a Linear checkpoint, and either continues the active
-monitor loop or clearly says monitoring has stopped.
+validation passes, records a Linear checkpoint, and stops cleanly. Run another
+manual PR comment check later if more feedback arrives.
 
-If the PR is merged or closed, Codex stops monitoring immediately, reports the
-final PR state, and does not make more code changes. Codex still does not move
-Linear to `Done`; merge completion remains handled by Linear-GitHub integration
-or humans.
+If the PR is merged or closed, Codex reports the final PR state and does not make
+more code changes. Codex still does not move Linear to `Done`; merge completion
+remains handled by Linear-GitHub integration or humans.
 
 ## Smoke-test checklist
 

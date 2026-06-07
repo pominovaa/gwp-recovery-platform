@@ -13,8 +13,8 @@ Work on Linear issue GWP-26
 Codex must then fetch the Linear issue, move it through the correct workflow
 states, plan the implementation, wait for human approval, implement the change
 with tests, validate the result with an internal validation agent, create or
-update a GitHub pull request, move the Linear issue to review, and continue
-monitoring PR feedback while the Codex session remains active.
+update a GitHub pull request, move the Linear issue to review, and handle PR
+feedback through manual one-time comment checks.
 
 This workflow is intended to be packaged as a Codex plugin distributed to all developers on the team.
 
@@ -107,8 +107,9 @@ The preferred trigger for work mode is explicit invocation of the
 CLI/IDE, or naming the skill in the prompt). When the request is ambiguous,
 Codex must default to the safe, read-only explain or plan mode and ask the
 developer to confirm before entering work mode. Work mode requires an explicit
-implementation/resume verb such as "work on", "implement", "build", "resume",
-or "monitor" plus a valid Linear issue ID.
+implementation/resume/comment-check verb such as "work on", "implement",
+"build", "resume", "check PR comments", or "review PR comments" plus a valid
+Linear issue ID.
 
 Recognized work-mode prompts include:
 
@@ -116,7 +117,8 @@ Recognized work-mode prompts include:
 work on Linear issue GWP-26
 resume workflow for GWP-26
 resume GWP-26
-monitor PR comments for GWP-26
+check PR comments for GWP-26
+review PR comments for GWP-26
 ```
 
 ### Explain or plan mode
@@ -166,8 +168,8 @@ Codex must infer the resume stage from Linear, Git, and GitHub state:
 1. If no branch exists, start the normal workflow.
 2. If a branch exists and no approved-plan checkpoint exists, re-plan and wait for approval.
 3. If an approved plan exists and no PR exists, continue implementation or rerun verification as needed.
-4. If an open PR exists, enter post-PR review-monitor mode.
-5. If the PR is merged or closed, stop monitoring, report the final PR state, and do not move Linear to `Done`.
+4. If an open PR exists, run one manual PR comment check.
+5. If the PR is merged or closed, report the final PR state and do not move Linear to `Done`.
 
 ## Required preflight
 
@@ -466,17 +468,14 @@ be created.
 If commits already exist on the branch (resume mode), Codex must not duplicate
 them; it commits only new changes and pushes the updated branch.
 
-## Post-PR review monitoring
+## Manual PR comment checks
 
-After PR creation, and whenever resume mode finds an open PR for the issue,
-Codex enters post-PR review-monitor mode. This monitor is session-bound: it runs
-only while the current Codex session remains active, and it is not a background
-daemon.
+After PR creation, Codex stops cleanly and waits for a manual PR comment check.
 
-The default polling interval is 10 minutes.
-
-Each poll must fetch all new GitHub PR feedback since the latest Linear
-review-monitor checkpoint:
+When the developer later asks to check PR comments, review PR comments, or
+resume an issue that already has an open PR, Codex performs one manual PR comment
+check. Each check fetches all new GitHub PR feedback since the latest Linear
+PR-comment checkpoint:
 
 1. Top-level PR conversation comments.
 2. Review submissions.
@@ -486,19 +485,19 @@ Codex must triage all new comments, including bot/agent comments. Resolved or
 outdated threads are context, but they do not trigger code changes unless they
 contain new comments that require action.
 
-If a poll finds that the PR is merged or closed, Codex must stop monitoring
-immediately, report the final PR state, skip further code changes, and avoid
-moving Linear to `Done`.
+If the PR is merged or closed, Codex must report the final PR state, skip further
+code changes, and avoid moving Linear to `Done`.
 
-If new comments are informational only, Codex posts a review-monitor checkpoint
-with the handled GitHub IDs and continues monitoring.
+If a new comment needs no code update, Codex must reply to the original GitHub
+comment explaining why no code change is needed, then post a PR-comment
+checkpoint with the handled GitHub ID.
 
 If any new comment may require a change, Codex must:
 
 1. Summarize the feedback.
 2. Produce a follow-up implementation plan.
 3. Ask the developer for approval.
-4. Avoid editing files, committing, pushing, replying on GitHub, or resolving GitHub threads until approval is received.
+4. Avoid editing files, committing, pushing, or resolving GitHub threads until approval is received.
 
 For approved PR-feedback changes, Codex runs the same guarded update cycle as
 the original implementation:
@@ -508,31 +507,8 @@ the original implementation:
 3. Codex commits with the Linear issue ID in the message.
 4. Validation Agent reviews the committed diff.
 5. Codex pushes the updated branch only after validation returns PASS.
-6. Codex posts follow-up implementation and review-monitor checkpoints to Linear.
-7. Codex continues the 10-minute review-monitor loop while the session remains active, or explicitly stops monitoring and provides the resume command.
-
-### Active monitor contract
-
-The phrase "session-bound monitor" means an active Codex turn/session is still
-running. It does not mean a background timer continues after Codex sends a final
-response.
-
-When Codex enters post-PR review-monitor mode, it must:
-
-1. Poll GitHub immediately.
-2. Keep the turn/session active if it is claiming the 10-minute timer is active.
-3. Poll every 10 minutes while monitoring remains active.
-4. Stop immediately if the PR is merged or closed.
-5. Report a brief status update after each poll.
-6. Avoid sending a final response while implying monitoring is still active.
-
-If Codex ends the turn, is asked to stop, or cannot keep the polling loop active,
-it must post any appropriate review-monitor checkpoint, state that monitoring is
-stopped, and provide:
-
-```text
-gwp-linear-to-pr resume workflow for GWP-26
-```
+6. Codex posts follow-up implementation and PR-comment checkpoints to Linear.
+7. Codex stops cleanly and tells the developer to run another manual PR comment check when they want Codex to inspect later feedback.
 
 GitHub review comments are read with the plugin-local helper:
 
@@ -542,7 +518,7 @@ python3 plugins/gwp-linear-workflow/scripts/gwp_pr_comments.py --issue-id GWP-26
 
 Codex must pass one `--handled-id <id>` argument for each GitHub comment,
 review, review-thread, and review-thread-comment ID already recorded in the
-latest Linear review-monitor checkpoint.
+latest Linear PR-comment checkpoint.
 
 ## Required verification commands
 
@@ -621,15 +597,15 @@ Move Linear issue to In Review
   ↓
 Post PR-created checkpoint to Linear
   ↓
-Enter session-bound PR review monitor
+Stop and tell developer to run check PR comments or resume workflow later
   ↓
-Poll GitHub PR comments every 10 minutes while session is active
+On manual PR comment check, fetch PR comments/reviews/threads once
   ↓
-If new comments require changes, produce follow-up plan and wait for approval
+If comments require changes, produce follow-up plan and wait for approval
   ↓
 After approval, Development Agent updates branch, verification passes, Validation Agent passes, and Codex pushes PR update
   ↓
-Post review-monitor/follow-up checkpoints to Linear
+Post PR-comment/follow-up checkpoints to Linear and stop
 ```
 
 For read-only explain or plan mode, Codex fetches the issue, inspects the repo,
@@ -681,11 +657,11 @@ state. Required checkpoint types are:
 
 1. Approved-plan checkpoint with the approved plan, acceptance criteria, test plan, and risk notes.
 2. PR-created checkpoint with branch, PR URL, PR number, base branch, verification results, validation result, and Linear status.
-3. Review-monitor checkpoint with poll timestamp, triage summary, and handled GitHub comment/review/thread IDs.
+3. PR-comment checkpoint with check timestamp, triage summary, and handled GitHub comment/review/thread IDs.
 4. Follow-up implementation checkpoint with approved follow-up plan, GitHub feedback IDs addressed, commit SHA, verification results, and validation result.
 
 Resume mode must read these checkpoint comments before deciding whether to
-re-plan, continue implementation, update an open PR, or only monitor comments.
+re-plan, continue implementation, update an open PR, or run a manual PR comment check.
 
 ## Agent execution model
 
@@ -1294,7 +1270,7 @@ Suggested content:
 ```md
 ---
 name: gwp-linear-to-pr
-description: Use this skill when the user asks Codex to work on, resume, or monitor a GWP Recovery Platform Linear issue, especially prompts like "Work on Linear issue GWP-26", "resume workflow for GWP-26", or "monitor PR comments for GWP-26". This workflow fetches the Linear issue, moves it through planning, implementation, validation, PR creation, In Review status, and session-bound PR feedback monitoring.
+description: Use this skill when the user asks Codex to work on, resume, or check PR comments for a GWP Recovery Platform Linear issue, especially prompts like "Work on Linear issue GWP-26", "resume workflow for GWP-26", or "check PR comments for GWP-26". This workflow fetches the Linear issue, moves it through planning, implementation, validation, PR creation, In Review status, and manual PR feedback checks.
 ---
 
 # GWP Linear-to-PR Workflow
@@ -1351,11 +1327,8 @@ a branch, editing files, committing, pushing, or creating a PR.
 27. Include acceptance criteria and verification results in the PR body.
 28. Move the Linear issue to `In Review`.
 29. Post a PR-created checkpoint to Linear.
-30. Enter session-bound PR review-monitor mode.
-31. Poll GitHub PR comments every 10 minutes while the session remains active.
-32. If comments require changes, produce a follow-up plan, wait for approval, update the branch, rerun verification and validation, push, and checkpoint the follow-up.
-33. Do not send a final response while claiming monitoring is active.
-34. When monitoring stops, say it stopped and provide the resume command.
+30. Stop and tell the developer to run `check PR comments` or `resume workflow` later.
+31. If manually checking PR comments finds feedback requiring changes, produce a follow-up plan, wait for approval, update the branch, rerun verification and validation, push, and checkpoint the follow-up.
 
 ## Hard rules
 

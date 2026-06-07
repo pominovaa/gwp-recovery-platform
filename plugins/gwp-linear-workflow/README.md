@@ -2,7 +2,7 @@
 
 This plugin packages the local Codex workflow for implementing GWP Recovery
 Platform Linear issues, opening GitHub pull requests, resuming interrupted
-workflows, and monitoring PR feedback while a Codex session is active.
+workflows, and checking PR feedback on request.
 
 The canonical workflow specification lives in the repository at
 `docs/gwp_codex_workflow_plugin_spec.md`.
@@ -61,14 +61,10 @@ gwp-linear-to-pr Work on Linear issue GWP-26
 The workflow fetches the issue, runs preflight, moves the issue to In Progress,
 creates an issue branch, produces a read-only plan, waits for developer
 approval, implements with tests, validates the committed diff, opens a GitHub PR,
-moves the issue to In Review, and monitors PR comments every 10 minutes while
-the Codex session remains active.
+moves the issue to In Review, and stops cleanly.
 
-The monitor is not a background service. If Codex sends a final response, the
-timer is no longer running; resume later with the command below.
-
-If the PR is merged or closed, monitoring stops immediately and Codex reports the
-final PR state without making further code changes.
+After PR creation, run a manual PR comment check when you want Codex to inspect
+new feedback.
 
 To resume interrupted work or continue from an open PR, ask Codex:
 
@@ -76,15 +72,23 @@ To resume interrupted work or continue from an open PR, ask Codex:
 gwp-linear-to-pr resume workflow for GWP-26
 ```
 
-To monitor an existing PR for new feedback without starting a new issue branch,
+To check an existing PR once for new feedback without starting a new issue branch,
 ask Codex:
 
 ```text
-gwp-linear-to-pr monitor PR comments for GWP-26
+gwp-linear-to-pr check PR comments for GWP-26
+```
+
+or:
+
+```text
+gwp-linear-to-pr review PR comments for GWP-26
 ```
 
 When new PR feedback may require code changes, Codex produces a follow-up plan
 and waits for approval before editing, committing, pushing, or updating the PR.
+When no code update is needed, Codex replies to the original GitHub comment with
+the reason and records the handled feedback in Linear.
 
 Linear reads, comments, and status transitions are handled by the plugin-local
 `gwp-linear-ops` skill over the bundled Linear MCP server.

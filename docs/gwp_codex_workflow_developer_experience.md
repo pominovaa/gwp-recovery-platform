@@ -60,9 +60,8 @@ From there:
 
 ## After the PR
 
-The workflow no longer stops at PR creation. Once the PR exists, Codex enters a
-session-bound review monitor. It checks GitHub PR feedback immediately, then
-every 10 minutes while the current Codex session remains active.
+After PR creation, Codex stops cleanly. When the developer wants Codex to inspect
+PR feedback, they ask for a one-time PR comment check.
 
 Codex reads:
 
@@ -71,19 +70,15 @@ Codex reads:
 3. Inline review threads and review-thread comments.
 
 All new comments are triaged, including bot or agent comments. Informational
-comments are recorded in a Linear review-monitor checkpoint. Comments that may
-require changes produce a follow-up plan. Codex must wait for developer approval
-before editing files, committing, pushing, replying on GitHub, or resolving
-threads.
+comments that need no code change get a direct GitHub reply explaining why no
+change is needed, then Codex records the handled ID in a Linear PR-comment
+checkpoint. Comments that may require changes produce a follow-up plan. Codex
+must wait for developer approval before editing files, committing, pushing, or
+resolving threads.
 
 Approved PR-feedback changes go through the same guarded loop as the original
 implementation: Development Agent, required npm commands, commit with the Linear
 issue ID, Validation Agent, push after `PASS`, and Linear follow-up checkpoint.
-
-The monitor is not a background daemon. A final assistant response means active
-monitoring has stopped. If Codex stops monitoring, it must say so clearly and
-give the resume command. If the PR is merged or closed, Codex stops monitoring
-immediately, reports the final PR state, and makes no further code changes.
 
 ## Resuming work
 
@@ -93,10 +88,16 @@ The developer can resume from any point with:
 gwp-linear-to-pr resume workflow for GWP-26
 ```
 
-or monitor an existing PR with:
+or check an existing PR with:
 
 ```text
-gwp-linear-to-pr monitor PR comments for GWP-26
+gwp-linear-to-pr check PR comments for GWP-26
+```
+
+or:
+
+```text
+gwp-linear-to-pr review PR comments for GWP-26
 ```
 
 On resume, Codex inspects Linear comments, local branches, remote branches,
@@ -105,8 +106,8 @@ commits, and GitHub PRs. It infers the current stage:
 1. No branch exists: start normal workflow.
 2. Branch exists but no approved-plan checkpoint exists: re-plan and wait for approval.
 3. Approved plan exists but no PR exists: continue implementation or verification.
-4. Open PR exists: enter review-monitor mode.
-5. PR is merged or closed: stop monitoring, report final state, and do not move Linear to `Done`.
+4. Open PR exists: run one manual PR comment check.
+5. PR is merged or closed: report final state and do not move Linear to `Done`.
 
 Linear comments are the durable checkpoint store. They capture the approved plan,
 PR-created state, handled GitHub feedback IDs, and follow-up implementation
@@ -125,7 +126,7 @@ gwp-linear-to-pr resume workflow for GWP-36
 Codex should detect PR #7, find the unresolved Copilot review thread, present a
 follow-up plan to reword the Find Help support-scope note, wait for approval,
 update the PR branch, rerun verification and validation, push the update, and
-continue monitoring.
+stop cleanly.
 
 ## Failure behavior
 

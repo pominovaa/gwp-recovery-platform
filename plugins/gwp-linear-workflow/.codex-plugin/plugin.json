@@ -1,7 +1,7 @@
 {
   "name": "gwp-linear-workflow",
-  "version": "0.1.0+codex.20260607005842",
-  "description": "Local Codex workflow for implementing, resuming, validating, opening, and monitoring GWP Recovery Platform Linear issue pull requests.",
+  "version": "0.1.0+codex.20260607013553",
+  "description": "Local Codex workflow for implementing, resuming, validating, opening, and checking comments on GWP Recovery Platform Linear issue pull requests.",
   "author": {
     "name": "GWP Recovery Platform"
   },
@@ -9,14 +9,14 @@
   "interface": {
     "displayName": "GWP Linear Workflow",
     "shortDescription": "Work and resume GWP Linear issues through PR creation and review feedback.",
-    "longDescription": "Adds local Codex skills for turning GWP Recovery Platform Linear issues into tested, validated GitHub pull requests, then resuming open PRs and monitoring review feedback.",
+    "longDescription": "Adds local Codex skills for turning GWP Recovery Platform Linear issues into tested, validated GitHub pull requests, then resuming open PRs and checking review feedback on request.",
     "developerName": "GWP Recovery Platform",
     "category": "Productivity",
     "capabilities": [
       "Linear issue workflow",
       "GitHub pull requests",
       "Local validation",
-      "PR review monitoring"
+      "PR comment checks"
     ],
     "defaultPrompt": "Work on Linear issue GWP-26"
   },

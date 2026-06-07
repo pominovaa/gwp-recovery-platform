@@ -1,6 +1,6 @@
 ---
 name: gwp-linear-to-pr
-description: "Use this skill when the user asks Codex to work on, resume, or monitor a GWP Recovery Platform Linear issue, especially prompts like Work on Linear issue GWP-26, resume workflow for GWP-26, or monitor PR comments for GWP-26. This workflow fetches the Linear issue, plans the change, waits for approval, implements with tests, validates acceptance criteria, creates or updates a GitHub PR, monitors PR feedback while the session is active, and keeps Linear status current through In Review."
+description: "Use this skill when the user asks Codex to work on, resume, or check PR comments for a GWP Recovery Platform Linear issue, especially prompts like Work on Linear issue GWP-26, resume workflow for GWP-26, check PR comments for GWP-26, or review PR comments for GWP-26. This workflow fetches the Linear issue, plans the change, waits for approval, implements with tests, validates acceptance criteria, creates or updates a GitHub PR, and handles PR feedback through manual one-time checks."
 ---
 
 # GWP Linear-to-PR Workflow
@@ -27,7 +27,7 @@ a branch, editing files, committing, pushing, or creating a PR.
 Default to read-only explain or plan mode unless the request contains all of:
 
 1. Explicit invocation of this workflow or an unmistakable request to use it.
-2. An implementation/resume verb such as `work on`, `implement`, `build`, `resume`, or `monitor`.
+2. An implementation/resume/comment-check verb such as `work on`, `implement`, `build`, `resume`, `check PR comments`, or `review PR comments`.
 3. A valid Linear issue ID like `GWP-26`.
 
 If the request is ambiguous, fetch/read only what is needed to explain the issue
@@ -38,7 +38,8 @@ Recognize these work-mode prompts:
 - `work on Linear issue GWP-26`
 - `resume workflow for GWP-26`
 - `resume GWP-26`
-- `monitor PR comments for GWP-26`
+- `check PR comments for GWP-26`
+- `review PR comments for GWP-26`
 
 ## Resume Mode
 
@@ -50,7 +51,7 @@ Before creating a branch or PR for an issue, detect existing work for that issue
 4. Read Linear comments for workflow checkpoints:
    - approved plan and acceptance criteria
    - PR-created summary
-   - review-monitor checkpoint with handled GitHub comment/thread IDs
+   - PR-comment checkpoint with handled GitHub comment/thread IDs
    - follow-up implementation checkpoints
 
 If multiple local branches, remote branches, or PRs could apply, ask the
@@ -63,8 +64,8 @@ Infer the resume stage from Linear, Git, and GitHub state:
 1. No branch exists: start the normal workflow.
 2. Branch exists and no approved-plan checkpoint exists: re-plan and wait for approval.
 3. Approved plan exists and no PR exists: continue implementation or rerun verification as needed.
-4. PR exists and is open: enter post-PR review-monitor mode.
-5. PR is merged or closed: stop monitoring, report final PR state, and do not move Linear to `Done`.
+4. PR exists and is open: run one manual PR comment check.
+5. PR is merged or closed: report final PR state and do not move Linear to `Done`.
 
 ## Required Preflight
 
@@ -99,10 +100,10 @@ keyring access failure:
 3. Treat GitHub authentication as valid only if the escalated check passes.
 4. Treat GitHub authentication as blocked only if the escalated check also fails.
 
-Use this retry rule for preflight, push/PR readiness checks, `gh pr create`, and
-any GitHub API calls made through the CLI. Git operations and `gh` may use
-different credential stores, so a successful `git push` does not prove `gh` can
-open a PR.
+Use this retry rule for preflight, push/PR readiness checks, `gh pr create`,
+`gh pr comment`, and any GitHub API calls made through the CLI. Git operations
+and `gh` may use different credential stores, so a successful `git push` does
+not prove `gh` can open a PR or reply to PR comments.
 
 If upstream push access fails, stop and report the failure. Continue with a
 fork-based PR only after the developer explicitly approves that fallback.
@@ -135,15 +136,13 @@ fork-based PR only after the developer explicitly approves that fallback.
 24. Create a GitHub PR with the Linear issue ID in the title and the required PR body sections.
 25. Use `gwp-linear-ops` to move the Linear issue to `In Review`.
 26. Use `gwp-linear-ops` to post a PR-created checkpoint comment to Linear.
-27. Enter post-PR review-monitor mode while the current Codex session remains active.
-28. Do not send a final response while claiming review monitoring is active.
-29. Post a final summary only when the developer stops monitoring, the session is ending, or the PR is merged or closed. The summary must say whether monitoring is active or stopped and include the resume command unless the PR reached a terminal state.
+27. Stop cleanly and tell the developer to use `gwp-linear-to-pr check PR comments for GWP-26` or `gwp-linear-to-pr resume workflow for GWP-26` when they want Codex to inspect PR feedback.
 
-## Post-PR Review Monitor
+## Manual PR Comment Check
 
-After PR creation, and whenever resuming an issue with an open PR, monitor PR
-feedback while the current Codex session remains active. This is not a hidden
-daemon and does not continue after the Codex session ends.
+Run this mode when the developer asks to check or review PR comments, or when
+resume mode finds an open PR for the issue. This is a one-time check; do not keep
+running after the check completes.
 
 Use this helper to fetch PR feedback:
 
@@ -152,29 +151,18 @@ python3 plugins/gwp-linear-workflow/scripts/gwp_pr_comments.py --issue-id GWP-26
 ```
 
 Pass `--handled-id <id>` for every GitHub comment, review, review-thread, or
-review-thread-comment ID already recorded in the latest Linear review-monitor
+review-thread-comment ID already recorded in the latest Linear PR-comment
 checkpoint.
 
-Monitor behavior:
+Comment-check behavior:
 
-1. Poll immediately when entering monitor mode.
-2. If monitoring continues, keep the Codex turn/session active and poll every 10 minutes.
-3. After every poll, report a brief status update to the developer.
-4. Fetch top-level PR comments, review submissions, and review threads.
-5. If the PR state is merged or closed, stop monitoring immediately, report the final PR state, and do not make further code changes.
-6. Triage all new comments, including bot/agent comments.
-7. Treat resolved or outdated threads as context; do not change code from them unless they contain new comments that require action.
-8. If new comments are informational only, post a Linear review-monitor checkpoint with handled IDs and keep monitoring.
-9. If any new comment may require a change, produce a follow-up implementation plan and ask for developer approval.
-10. Do not edit files, commit, push, reply on GitHub, or resolve GitHub threads before the developer approves the follow-up plan.
-
-Monitor-stop behavior:
-
-- A final assistant response ends active monitoring. Do not imply the timer is still running after a final response.
-- If the developer asks to pause, stop, or wait for later, post a review-monitor checkpoint, say monitoring is stopped, and provide `gwp-linear-to-pr resume workflow for GWP-26`.
-- If the PR is merged or closed, say monitoring is stopped because the PR reached a terminal state, report the PR state, and do not provide an update plan.
-- If the session must end for any other reason, say monitoring is stopped and provide the same resume command.
-- If no active polling loop is running, do not describe monitoring as active.
+1. Fetch top-level PR comments, review submissions, and review threads once.
+2. If the PR state is merged or closed, report the final PR state and do not make further code changes.
+3. Triage all new comments, including bot/agent comments.
+4. Treat resolved or outdated threads as context; do not change code from them unless they contain new comments that require action.
+5. If any new comment may require a change, produce a follow-up implementation plan and ask for developer approval.
+6. If no code update is needed for a new comment, reply to the original GitHub comment explaining why no change is needed, then post a Linear PR-comment checkpoint with the handled ID.
+7. Do not edit files, commit, push, reply on GitHub, or resolve GitHub threads before the developer approves a follow-up plan, except for the explicit no-code-change reply described above.
 
 For approved PR-feedback changes:
 
@@ -183,14 +171,14 @@ For approved PR-feedback changes:
 3. Commit with the Linear issue ID in the commit message.
 4. Spawn the `gwp_validator` agent to validate the updated committed diff.
 5. Push the updated branch only after validation returns PASS.
-6. Use `gwp-linear-ops` to post a follow-up implementation checkpoint and a review-monitor checkpoint with handled GitHub IDs.
-7. Continue monitoring with the same active-loop rules above, or explicitly stop and provide the resume command.
+6. Use `gwp-linear-ops` to post a follow-up implementation checkpoint and a PR-comment checkpoint with handled GitHub IDs.
+7. Stop cleanly and tell the developer to run `gwp-linear-to-pr check PR comments for GWP-26` again when they want another one-time check.
 
 ## Hard Rules
 
 - Never commit directly to `main`.
-- Never create a PR if any required verification command fails.
-- Never create a PR if internal validation fails.
+- Never create or update a PR if any required verification command fails.
+- Never create or update a PR if internal validation fails.
 - Never move an issue to `Done`; `Done` means PR merged.
 - Never commit secrets or `.env.local`.
 - Never broaden scope without developer approval.
