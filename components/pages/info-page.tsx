@@ -107,21 +107,27 @@ export function FindHelpPage() {
 export function HealPage() {
   return (
     <PageFrame>
-      <PageHeader eyebrow="Heal" title="Support for the hard days.">
-        Practical tools for moments when recovery feels loud: coping cards, meal-support reflections, treatment notes, and private journaling without triggering metrics.
-      </PageHeader>
-      <section className="px-5 pb-24">
+      <section className="px-5 py-20">
+        <div className="mx-auto mb-10 max-w-3xl text-center">
+          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-stone-500">Heal</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-stone-950 md:text-5xl">Support for the hard days.</h1>
+          <p className="mt-5 text-lg leading-8 text-stone-600">
+            Practical tools for moments when recovery feels loud: coping cards, meal-support reflections, treatment notes, and private journaling without triggering metrics.
+          </p>
+        </div>
         <div className="mx-auto grid max-w-7xl gap-5 md:grid-cols-3">
           {[
             [Heart, "Meal Support Reflection", "Reflect on distress, emotions, support used, and what helped without calories, weight, portions, or comparison."],
             [ClipboardList, "Recovery Binder", "Keep provider questions, appointments, school notes, insurance calls, and treatment timeline in one private place."],
             [ShieldCheck, "Safety Guardrails", "Product rules are designed to remove numbers, triggering details, PHI, self-harm methods, and peer medical advice."],
           ].map(([Icon, title, text]) => (
-            <Card key={String(title)} className="rounded-[2rem] border-stone-200 bg-white shadow-sm">
+            <Card key={String(title)} className="rounded-[2rem] border-stone-200 bg-white/80 shadow-sm">
               <CardContent className="p-7">
-                <Icon className="mb-5 h-7 w-7 text-stone-900" />
-                <h2 className="text-xl font-semibold text-stone-950">{title}</h2>
-                <p className="mt-3 leading-7 text-stone-600">{text}</p>
+                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-stone-100 text-stone-900">
+                  <Icon className="h-6 w-6" />
+                </div>
+                <h2 className="mb-3 text-xl font-semibold text-stone-950">{title}</h2>
+                <p className="leading-7 text-stone-600">{text}</p>
               </CardContent>
             </Card>
           ))}
