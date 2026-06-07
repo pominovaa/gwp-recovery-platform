@@ -67,6 +67,9 @@ the Codex session remains active.
 The monitor is not a background service. If Codex sends a final response, the
 timer is no longer running; resume later with the command below.
 
+If the PR is merged or closed, monitoring stops immediately and Codex reports the
+final PR state without making further code changes.
+
 To resume interrupted work or continue from an open PR, ask Codex:
 
 ```text

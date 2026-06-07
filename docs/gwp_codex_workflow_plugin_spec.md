@@ -167,7 +167,7 @@ Codex must infer the resume stage from Linear, Git, and GitHub state:
 2. If a branch exists and no approved-plan checkpoint exists, re-plan and wait for approval.
 3. If an approved plan exists and no PR exists, continue implementation or rerun verification as needed.
 4. If an open PR exists, enter post-PR review-monitor mode.
-5. If the PR is merged, report the merged state and do not move Linear to `Done`.
+5. If the PR is merged or closed, stop monitoring, report the final PR state, and do not move Linear to `Done`.
 
 ## Required preflight
 
@@ -486,6 +486,10 @@ Codex must triage all new comments, including bot/agent comments. Resolved or
 outdated threads are context, but they do not trigger code changes unless they
 contain new comments that require action.
 
+If a poll finds that the PR is merged or closed, Codex must stop monitoring
+immediately, report the final PR state, skip further code changes, and avoid
+moving Linear to `Done`.
+
 If new comments are informational only, Codex posts a review-monitor checkpoint
 with the handled GitHub IDs and continues monitoring.
 
@@ -518,8 +522,9 @@ When Codex enters post-PR review-monitor mode, it must:
 1. Poll GitHub immediately.
 2. Keep the turn/session active if it is claiming the 10-minute timer is active.
 3. Poll every 10 minutes while monitoring remains active.
-4. Report a brief status update after each poll.
-5. Avoid sending a final response while implying monitoring is still active.
+4. Stop immediately if the PR is merged or closed.
+5. Report a brief status update after each poll.
+6. Avoid sending a final response while implying monitoring is still active.
 
 If Codex ends the turn, is asked to stop, or cannot keep the polling loop active,
 it must post any appropriate review-monitor checkpoint, state that monitoring is

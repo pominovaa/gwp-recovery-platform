@@ -82,7 +82,8 @@ issue ID, Validation Agent, push after `PASS`, and Linear follow-up checkpoint.
 
 The monitor is not a background daemon. A final assistant response means active
 monitoring has stopped. If Codex stops monitoring, it must say so clearly and
-give the resume command.
+give the resume command. If the PR is merged or closed, Codex stops monitoring
+immediately, reports the final PR state, and makes no further code changes.
 
 ## Resuming work
 
@@ -105,7 +106,7 @@ commits, and GitHub PRs. It infers the current stage:
 2. Branch exists but no approved-plan checkpoint exists: re-plan and wait for approval.
 3. Approved plan exists but no PR exists: continue implementation or verification.
 4. Open PR exists: enter review-monitor mode.
-5. PR is merged: report merged state and do not move Linear to `Done`.
+5. PR is merged or closed: stop monitoring, report final state, and do not move Linear to `Done`.
 
 Linear comments are the durable checkpoint store. They capture the approved plan,
 PR-created state, handled GitHub feedback IDs, and follow-up implementation

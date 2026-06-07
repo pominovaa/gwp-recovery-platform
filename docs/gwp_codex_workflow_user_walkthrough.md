@@ -326,6 +326,11 @@ Codex then validates the committed diff, pushes the updated branch only after
 validation passes, records a Linear checkpoint, and either continues the active
 monitor loop or clearly says monitoring has stopped.
 
+If the PR is merged or closed, Codex stops monitoring immediately, reports the
+final PR state, and does not make more code changes. Codex still does not move
+Linear to `Done`; merge completion remains handled by Linear-GitHub integration
+or humans.
+
 ## Smoke-test checklist
 
 For `GWP-36`, confirm these observations:

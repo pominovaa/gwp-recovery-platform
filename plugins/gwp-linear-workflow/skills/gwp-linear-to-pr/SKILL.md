@@ -64,7 +64,7 @@ Infer the resume stage from Linear, Git, and GitHub state:
 2. Branch exists and no approved-plan checkpoint exists: re-plan and wait for approval.
 3. Approved plan exists and no PR exists: continue implementation or rerun verification as needed.
 4. PR exists and is open: enter post-PR review-monitor mode.
-5. PR is merged: report merged state and do not move Linear to `Done`.
+5. PR is merged or closed: stop monitoring, report final PR state, and do not move Linear to `Done`.
 
 ## Required Preflight
 
@@ -137,7 +137,7 @@ fork-based PR only after the developer explicitly approves that fallback.
 26. Use `gwp-linear-ops` to post a PR-created checkpoint comment to Linear.
 27. Enter post-PR review-monitor mode while the current Codex session remains active.
 28. Do not send a final response while claiming review monitoring is active.
-29. Post a final summary only when the developer stops monitoring, the session is ending, or the PR is merged. The summary must say whether monitoring is active or stopped and include the resume command.
+29. Post a final summary only when the developer stops monitoring, the session is ending, or the PR is merged or closed. The summary must say whether monitoring is active or stopped and include the resume command unless the PR reached a terminal state.
 
 ## Post-PR Review Monitor
 
@@ -161,16 +161,18 @@ Monitor behavior:
 2. If monitoring continues, keep the Codex turn/session active and poll every 10 minutes.
 3. After every poll, report a brief status update to the developer.
 4. Fetch top-level PR comments, review submissions, and review threads.
-5. Triage all new comments, including bot/agent comments.
-6. Treat resolved or outdated threads as context; do not change code from them unless they contain new comments that require action.
-7. If new comments are informational only, post a Linear review-monitor checkpoint with handled IDs and keep monitoring.
-8. If any new comment may require a change, produce a follow-up implementation plan and ask for developer approval.
-9. Do not edit files, commit, push, reply on GitHub, or resolve GitHub threads before the developer approves the follow-up plan.
+5. If the PR state is merged or closed, stop monitoring immediately, report the final PR state, and do not make further code changes.
+6. Triage all new comments, including bot/agent comments.
+7. Treat resolved or outdated threads as context; do not change code from them unless they contain new comments that require action.
+8. If new comments are informational only, post a Linear review-monitor checkpoint with handled IDs and keep monitoring.
+9. If any new comment may require a change, produce a follow-up implementation plan and ask for developer approval.
+10. Do not edit files, commit, push, reply on GitHub, or resolve GitHub threads before the developer approves the follow-up plan.
 
 Monitor-stop behavior:
 
 - A final assistant response ends active monitoring. Do not imply the timer is still running after a final response.
 - If the developer asks to pause, stop, or wait for later, post a review-monitor checkpoint, say monitoring is stopped, and provide `gwp-linear-to-pr resume workflow for GWP-26`.
+- If the PR is merged or closed, say monitoring is stopped because the PR reached a terminal state, report the PR state, and do not provide an update plan.
 - If the session must end for any other reason, say monitoring is stopped and provide the same resume command.
 - If no active polling loop is running, do not describe monitoring as active.
 
