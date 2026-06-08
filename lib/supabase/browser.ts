@@ -21,7 +21,9 @@ export function getSupabaseBrowser() {
 }
 
 export const supabaseBrowser = new Proxy({} as SupabaseBrowserClient, {
-  get(_target, property, receiver) {
-    return Reflect.get(getSupabaseBrowser(), property, receiver);
+  get(_target, property) {
+    const client = getSupabaseBrowser();
+    const value = Reflect.get(client, property, client);
+    return typeof value === "function" ? value.bind(client) : value;
   },
 });

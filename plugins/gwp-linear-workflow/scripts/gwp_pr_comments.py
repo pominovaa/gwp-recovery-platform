@@ -9,6 +9,8 @@ import sys
 from pathlib import Path
 from typing import Any
 
+from gwp_pr_utils import issue_key_matches
+
 
 ROOT = Path.cwd()
 EXPECTED_REPO = "olena-ageyeva/gwp-recovery-platform"
@@ -159,12 +161,11 @@ def resolve_pr_by_issue(repo: str, issue_id: str) -> int:
             "number,title,headRefName,state,updatedAt",
         ]
     )
-    issue_lower = issue_id.lower()
     matches = [
         pr
         for pr in payload
-        if issue_lower in (pr.get("title") or "").lower()
-        or issue_lower in (pr.get("headRefName") or "").lower()
+        if issue_key_matches(issue_id, pr.get("title") or "")
+        or issue_key_matches(issue_id, pr.get("headRefName") or "")
     ]
     open_matches = [pr for pr in matches if pr.get("state") == "OPEN"]
     candidates = open_matches or matches

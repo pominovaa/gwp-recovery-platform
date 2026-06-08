@@ -26,7 +26,9 @@ export function getSupabaseAdmin() {
 }
 
 export const supabaseAdmin = new Proxy({} as SupabaseAdminClient, {
-  get(_target, property, receiver) {
-    return Reflect.get(getSupabaseAdmin(), property, receiver);
+  get(_target, property) {
+    const client = getSupabaseAdmin();
+    const value = Reflect.get(client, property, client);
+    return typeof value === "function" ? value.bind(client) : value;
   },
 });

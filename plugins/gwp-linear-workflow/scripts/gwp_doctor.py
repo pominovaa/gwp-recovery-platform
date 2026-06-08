@@ -5,8 +5,15 @@ import json
 import os
 import shlex
 import subprocess
-import tomllib
 from pathlib import Path
+
+try:
+    import tomllib
+except ModuleNotFoundError:
+    tomllib = None  # type: ignore[assignment]
+    TOMLDecodeError = ValueError
+else:
+    TOMLDecodeError = tomllib.TOMLDecodeError
 
 
 ROOT = Path.cwd()
@@ -139,8 +146,17 @@ def check_agents() -> tuple[bool, str, str]:
             continue
 
         try:
+            if tomllib is None:
+                raise RuntimeError(
+                    "Python 3.11+ is required to read project agent TOML files. "
+                    "Run this doctor with Python 3.11+ or install a TOML parser "
+                    "and update the script to use it."
+                )
             data = tomllib.loads(path.read_text())
-        except tomllib.TOMLDecodeError as error:
+        except RuntimeError as error:
+            failures.append(str(error))
+            break
+        except TOMLDecodeError as error:
             failures.append(f"{path} is invalid TOML: {error}")
             continue
 
