@@ -16,6 +16,18 @@ describe("content pages", () => {
     expectNoGlobalShell(html);
   });
 
+  it("renders Liv Label Free with review metadata and boundaries", () => {
+    const html = renderToStaticMarkup(<FindHelpPage />);
+
+    expect(html).toContain("Liv Label Free");
+    expect(html).toContain('href="https://www.livlabelfree.com/"');
+    expect(html).toContain("Neurodiversity-affirming ED recovery");
+    expect(html).toContain("Autistic and neurodivergent people");
+    expect(html).toContain("Free educational materials and paid coaching or books");
+    expect(html).toContain("not endorsements or clinical recommendations");
+    expect(html).toContain("does not provide medical care, crisis support, diagnosis, treatment, or guarantees");
+  });
+
   it("renders heal page", () => {
     const html = renderToStaticMarkup(<HealPage />);
 
