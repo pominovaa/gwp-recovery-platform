@@ -1,5 +1,3 @@
-import Link from "next/link";
-
 export function SiteFooter() {
   return (
     <footer className="border-t border-stone-200 bg-white px-5 py-10">
@@ -9,7 +7,7 @@ export function SiteFooter() {
           <div className="text-sm text-stone-500">Heal. Live. Give.</div>
         </div>
         <div className="flex flex-wrap gap-5 text-sm text-stone-500">
-          <Link href="/#give" className="hover:text-stone-950">Safety Standard</Link>
+          <a href="/#give" className="hover:text-stone-950">Safety Standard</a>
           <a href="#" className="hover:text-stone-950">Privacy</a>
           <a href="#" className="hover:text-stone-950">Terms</a>
           <a href="#" className="hover:text-stone-950">Contact</a>

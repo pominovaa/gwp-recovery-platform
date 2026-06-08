@@ -2,7 +2,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { Heart, LifeBuoy, Menu, X } from "lucide-react";
 import { AuthDialog } from "@/components/auth/auth-dialog";
 import { CustomizeIcon } from "@/components/ui/customize-icon";
@@ -144,7 +143,7 @@ export function SiteNav() {
     <>
       <header className="sticky top-0 z-50 border-b border-stone-200/80 bg-white/85 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
-          <Link href="/" className="flex items-center gap-3">
+          <a href="/" className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-stone-900 text-white shadow-sm">
               <Heart className="h-5 w-5" />
             </div>
@@ -152,20 +151,20 @@ export function SiteNav() {
               <div className="text-base font-semibold tracking-tight text-stone-950">Get Whole Project</div>
               <div className="text-xs font-medium uppercase tracking-[0.25em] text-stone-500">Heal · Live · Give</div>
             </div>
-          </Link>
+          </a>
 
           <nav className="hidden items-center gap-6 md:flex">
             {links.map((link) => (
-              <Link key={link.label} href={link.href} className="text-sm font-medium text-stone-600 transition hover:text-stone-950">
+              <a key={link.label} href={link.href} className="text-sm font-medium text-stone-600 transition hover:text-stone-950">
                 {link.label}
-              </Link>
+              </a>
             ))}
-            <Link href="/find-help" className="inline-flex h-10 items-center gap-2 rounded-full bg-rose-700 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-800">
+            <a href="/find-help" className="inline-flex h-10 items-center gap-2 rounded-full bg-rose-700 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-800">
               Find help <LifeBuoy className="h-4 w-4" />
-            </Link>
-            <Link href="/find-support" aria-label="Upgrade to customize" className="flex h-10 w-10 items-center justify-center rounded-full border border-stone-200 bg-white text-xs font-semibold text-stone-700 shadow-sm transition hover:bg-stone-50">
+            </a>
+            <a href="/find-support" aria-label="Upgrade to customize" className="flex h-10 w-10 items-center justify-center rounded-full border border-stone-200 bg-white text-xs font-semibold text-stone-700 shadow-sm transition hover:bg-stone-50">
               <CustomizeIcon />
-            </Link>
+            </a>
             <button
               type="button"
               onClick={() => setAccountOpen(true)}
@@ -184,13 +183,13 @@ export function SiteNav() {
           <div className="border-t border-stone-200 bg-white px-5 py-4 md:hidden">
             <div className="flex flex-col gap-4">
               {links.map((link) => (
-                <Link key={link.label} href={link.href} className="text-sm font-medium text-stone-700" onClick={() => setOpen(false)}>
+                <a key={link.label} href={link.href} className="text-sm font-medium text-stone-700" onClick={() => setOpen(false)}>
                   {link.label}
-                </Link>
+                </a>
               ))}
-              <Link href="/find-help" className="inline-flex w-fit items-center gap-2 rounded-full bg-rose-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm" onClick={() => setOpen(false)}>
+              <a href="/find-help" className="inline-flex w-fit items-center gap-2 rounded-full bg-rose-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm" onClick={() => setOpen(false)}>
                 Find help <LifeBuoy className="h-4 w-4" />
-              </Link>
+              </a>
               <button
                 type="button"
                 onClick={() => {

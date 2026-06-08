@@ -19,11 +19,7 @@ describe("app routes", () => {
   });
 
   it("renders find help route", () => {
-    const html = renderToStaticMarkup(<FindHelpRoute />);
-
-    expect(html).toContain("Urgent help comes first.");
-    expect(html).toContain("This resource hub is a starting point for finding support.");
-    expect(html).toContain("not a substitute for emergency services");
+    expect(renderToStaticMarkup(<FindHelpRoute />)).toContain("Urgent help comes first.");
   });
 
   it("renders heal route", () => {

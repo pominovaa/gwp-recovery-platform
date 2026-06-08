@@ -14,9 +14,7 @@ describe("Supabase client configuration", () => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "");
     vi.doUnmock("@/lib/supabase/browser");
 
-    const { supabaseBrowser } = await import("./browser");
-
-    expect(() => supabaseBrowser.auth).toThrow("Missing NEXT_PUBLIC_SUPABASE_URL");
+    await expect(import("./browser")).rejects.toThrow("Missing NEXT_PUBLIC_SUPABASE_URL");
   });
 
   it("browser client creates a Supabase client", async () => {
@@ -26,9 +24,9 @@ describe("Supabase client configuration", () => {
     vi.stubEnv("NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "pk_test");
     vi.doUnmock("@/lib/supabase/browser");
 
-    const browserModule = await import("./browser");
+    const module = await import("./browser");
 
-    expect(browserModule.getSupabaseBrowser()).toEqual({ client: "browser" });
+    expect(module.supabaseBrowser).toEqual({ client: "browser" });
     expect(createClient).toHaveBeenCalledWith("https://example.supabase.co", "pk_test");
   });
 
@@ -37,9 +35,7 @@ describe("Supabase client configuration", () => {
     vi.stubEnv("SUPABASE_SECRET_KEY", "");
     vi.doUnmock("@/lib/supabase/server");
 
-    const { supabaseAdmin } = await import("./server");
-
-    expect(() => supabaseAdmin.auth).toThrow("Missing NEXT_PUBLIC_SUPABASE_URL");
+    await expect(import("./server")).rejects.toThrow("Missing NEXT_PUBLIC_SUPABASE_URL");
   });
 
   it("server client creates an admin Supabase client without persisted auth", async () => {
@@ -49,9 +45,9 @@ describe("Supabase client configuration", () => {
     vi.stubEnv("SUPABASE_SECRET_KEY", "secret");
     vi.doUnmock("@/lib/supabase/server");
 
-    const serverModule = await import("./server");
+    const module = await import("./server");
 
-    expect(serverModule.getSupabaseAdmin()).toEqual({ client: "server" });
+    expect(module.supabaseAdmin).toEqual({ client: "server" });
     expect(createClient).toHaveBeenCalledWith(
       "https://example.supabase.co",
       "secret",

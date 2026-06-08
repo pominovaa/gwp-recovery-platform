@@ -14,15 +14,8 @@ describe("billing interactions", () => {
     vi.stubGlobal("fetch", vi.fn());
   });
 
-  function mockBrowserSession(session: unknown) {
-    vi.mocked(supabaseBrowser.auth.getSession).mockResolvedValueOnce({
-      data: { session },
-      error: null,
-    } as never);
-  }
-
   it("shows an inline checkout error when the user is signed out", async () => {
-    mockBrowserSession(null);
+    vi.mocked(supabaseBrowser.auth.getSession).mockResolvedValueOnce({ data: { session: null }, error: null });
 
     render(<CheckoutButton planId="light">Start light plan</CheckoutButton>);
     await userEvent.click(screen.getByRole("button", { name: "Start light plan" }));
@@ -32,7 +25,10 @@ describe("billing interactions", () => {
   });
 
   it("shows an inline checkout error when the API fails", async () => {
-    mockBrowserSession({ access_token: "token" });
+    vi.mocked(supabaseBrowser.auth.getSession).mockResolvedValueOnce({
+      data: { session: { access_token: "token" } },
+      error: null,
+    });
     vi.mocked(fetch).mockResolvedValueOnce(
       new Response(JSON.stringify({ error: "Stripe is unavailable" }), { status: 500 })
     );
@@ -44,7 +40,10 @@ describe("billing interactions", () => {
   });
 
   it("shows a generic checkout error when fetch throws", async () => {
-    mockBrowserSession({ access_token: "token" });
+    vi.mocked(supabaseBrowser.auth.getSession).mockResolvedValueOnce({
+      data: { session: { access_token: "token" } },
+      error: null,
+    });
     vi.mocked(fetch).mockRejectedValueOnce(new Error("network down"));
 
     render(<CheckoutButton planId="family">Start family preview</CheckoutButton>);
@@ -62,7 +61,7 @@ describe("billing interactions", () => {
   });
 
   it("shows an inline portal error when the user is signed out", async () => {
-    mockBrowserSession(null);
+    vi.mocked(supabaseBrowser.auth.getSession).mockResolvedValueOnce({ data: { session: null }, error: null });
 
     render(<BillingPortalButton />);
     await userEvent.click(screen.getByRole("button", { name: "Manage billing" }));
@@ -71,7 +70,10 @@ describe("billing interactions", () => {
   });
 
   it("shows an inline portal error when the API fails", async () => {
-    mockBrowserSession({ access_token: "token" });
+    vi.mocked(supabaseBrowser.auth.getSession).mockResolvedValueOnce({
+      data: { session: { access_token: "token" } },
+      error: null,
+    });
     vi.mocked(fetch).mockResolvedValueOnce(
       new Response(JSON.stringify({ error: "No billing account found yet." }), { status: 404 })
     );
