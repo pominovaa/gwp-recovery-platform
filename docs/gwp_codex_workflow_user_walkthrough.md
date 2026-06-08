@@ -167,6 +167,12 @@ To check an existing PR once for new review comments, enter:
 gwp-linear-to-pr check PR comments for GWP-XX
 ```
 
+To have Codex review the PR itself and post one top-level PR comment, enter:
+
+```text
+gwp-linear-to-pr review PR for GWP-XX
+```
+
 The resume workflow infers the current stage from Linear comments, local and
 remote branches, commits, and any open GitHub PR. If an open PR exists, Codex
 runs the same one-time PR comment check instead of creating a new branch or PR.
@@ -330,6 +336,23 @@ manual PR comment check later if more feedback arrives.
 If the PR is merged or closed, Codex reports the final PR state and does not make
 more code changes. Codex still does not move Linear to `Done`; merge completion
 remains handled by Linear-GitHub integration or humans.
+
+## 13. Ask Codex to review the PR
+
+To publish a Codex-authored review after the PR exists, run:
+
+```text
+gwp-linear-to-pr review PR for GWP-XX
+```
+
+Codex resolves the PR from the Linear issue, fetches PR metadata, changed files,
+commits, and diff context, then runs the read-only Reviewer Agent. It posts one
+top-level PR comment with findings, test and validation notes, risk notes, and
+follow-ups.
+
+This is not the same as `review PR comments`. It does not triage existing
+reviewer feedback, edit files, change Linear status, post inline comments,
+approve the PR, or submit an official GitHub review event.
 
 ## Smoke-test checklist
 

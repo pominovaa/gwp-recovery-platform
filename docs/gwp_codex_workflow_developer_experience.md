@@ -17,9 +17,9 @@ Codex, and runs the workflow doctor:
 python3 plugins/gwp-linear-workflow/scripts/gwp_doctor.py
 ```
 
-The custom planning, development, and validation agents are committed to the
-repository under `.codex/agents/*.toml`. Developers do not create those agents
-locally; trusting the project lets Codex load them.
+The custom planning, development, validation, and reviewer agents are committed
+to the repository under `.codex/agents/*.toml`. Developers do not create those
+agents locally; trusting the project lets Codex load them.
 
 ## Starting an issue
 
@@ -80,6 +80,19 @@ Approved PR-feedback changes go through the same guarded loop as the original
 implementation: Development Agent, required npm commands, commit with the Linear
 issue ID, Validation Agent, push after `PASS`, and Linear follow-up checkpoint.
 
+When the developer wants Codex to review the current PR itself and publish
+feedback, they ask:
+
+```text
+gwp-linear-to-pr review PR for GWP-26
+```
+
+This outbound review path is separate from `review PR comments`. Codex resolves
+the PR from the Linear issue, fetches PR metadata and diff context, runs the
+read-only Reviewer Agent, then posts one structured top-level PR comment. It does
+not edit files, change Linear status, post inline comments, approve the PR, or
+submit an official GitHub review event.
+
 ## Resuming work
 
 The developer can resume from any point with:
@@ -98,6 +111,12 @@ or:
 
 ```text
 gwp-linear-to-pr review PR comments for GWP-26
+```
+
+To publish a Codex-authored review comment on the PR, ask:
+
+```text
+gwp-linear-to-pr review PR for GWP-26
 ```
 
 On resume, Codex inspects Linear comments, local branches, remote branches,

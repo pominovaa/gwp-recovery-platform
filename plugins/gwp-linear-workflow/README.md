@@ -2,7 +2,8 @@
 
 This plugin packages the local Codex workflow for implementing GWP Recovery
 Platform Linear issues, opening GitHub pull requests, resuming interrupted
-workflows, and checking PR feedback on request.
+workflows, checking PR feedback on request, and posting Codex-authored PR review
+comments.
 
 The canonical workflow specification lives in the repository at
 `docs/gwp_codex_workflow_plugin_spec.md`.
@@ -90,6 +91,16 @@ and waits for approval before editing, committing, pushing, or updating the PR.
 When no code update is needed, Codex replies to the original GitHub comment with
 the reason and records the handled feedback in Linear.
 
+To have Codex review the PR itself and post one structured top-level PR comment,
+ask:
+
+```text
+gwp-linear-to-pr review PR for GWP-26
+```
+
+This is separate from `review PR comments`: it does not triage incoming feedback
+or edit code, and it does not submit an official GitHub review event.
+
 Linear reads, comments, and status transitions are handled by the plugin-local
 `gwp-linear-ops` skill over the bundled Linear MCP server.
 
@@ -101,3 +112,4 @@ Linear reads, comments, and status transitions are handled by the plugin-local
 - Do not create a PR unless tests, lint, typecheck, build, and internal
   validation all pass.
 - Do not apply PR-review feedback without developer approval of a follow-up plan.
+- Do not use outbound PR review mode to approve, merge, or inline-comment on a PR.

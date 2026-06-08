@@ -22,6 +22,7 @@ REQUIRED_AGENTS = {
     "gwp-planner.toml": {"name": "gwp_planner", "sandbox_mode": "read-only"},
     "gwp-developer.toml": {"name": "gwp_developer"},
     "gwp-validator.toml": {"name": "gwp_validator", "sandbox_mode": "read-only"},
+    "gwp-reviewer.toml": {"name": "gwp_reviewer", "sandbox_mode": "read-only"},
 }
 
 

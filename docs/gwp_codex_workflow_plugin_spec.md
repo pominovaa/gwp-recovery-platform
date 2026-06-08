@@ -14,7 +14,8 @@ Codex must then fetch the Linear issue, move it through the correct workflow
 states, plan the implementation, wait for human approval, implement the change
 with tests, validate the result with an internal validation agent, create or
 update a GitHub pull request, move the Linear issue to review, and handle PR
-feedback through manual one-time comment checks.
+feedback through manual one-time comment checks. On request, Codex can also run
+a read-only outbound PR review and post one structured top-level PR comment.
 
 This workflow is intended to be packaged as a Codex plugin distributed to all developers on the team.
 
@@ -107,9 +108,9 @@ The preferred trigger for work mode is explicit invocation of the
 CLI/IDE, or naming the skill in the prompt). When the request is ambiguous,
 Codex must default to the safe, read-only explain or plan mode and ask the
 developer to confirm before entering work mode. Work mode requires an explicit
-implementation/resume/comment-check verb such as "work on", "implement",
-"build", "resume", "check PR comments", or "review PR comments" plus a valid
-Linear issue ID.
+implementation/resume/comment-check/review verb such as "work on", "implement",
+"build", "resume", "check PR comments", "review PR comments", "review PR", or
+"review pull request" plus a valid Linear issue ID.
 
 Recognized work-mode prompts include:
 
@@ -119,6 +120,8 @@ resume workflow for GWP-26
 resume GWP-26
 check PR comments for GWP-26
 review PR comments for GWP-26
+review PR for GWP-26
+review pull request for GWP-26
 ```
 
 ### Explain or plan mode
@@ -170,6 +173,10 @@ Codex must infer the resume stage from Linear, Git, and GitHub state:
 3. If an approved plan exists and no PR exists, continue implementation or rerun verification as needed.
 4. If an open PR exists, run one manual PR comment check.
 5. If the PR is merged or closed, report the final PR state and do not move Linear to `Done`.
+
+Outbound PR review mode is separate from resume mode. If the developer asks to
+`review PR for GWP-26` or `review pull request for GWP-26`, Codex must run the
+outbound PR review workflow instead of the manual PR comment check.
 
 ## Required preflight
 
@@ -520,6 +527,69 @@ Codex must pass one `--handled-id <id>` argument for each GitHub comment,
 review, review-thread, and review-thread-comment ID already recorded in the
 latest Linear PR-comment checkpoint.
 
+## Outbound PR reviews
+
+When the developer asks to `review PR for GWP-26` or `review pull request for
+GWP-26`, Codex reviews the GitHub PR associated with the Linear issue and posts
+one structured top-level PR conversation comment. This mode is distinct from
+`review PR comments`, which triages incoming reviewer feedback.
+
+Outbound PR review mode may read Linear issue context, workflow checkpoints,
+GitHub PR metadata, changed files, commits, and diff context. It must not edit
+files, commit, push, change Linear status, resolve threads, approve a PR, merge
+a PR, post inline comments, or submit an official GitHub review event.
+
+GitHub PR review context is read with the plugin-local helper:
+
+```bash
+python3 plugins/gwp-linear-workflow/scripts/gwp_pr_review_context.py --issue-id GWP-26
+```
+
+The helper resolves the PR from the issue ID or explicit PR number, verifies the
+expected upstream repository, and emits PR metadata, changed files, and diff
+context as JSON for the reviewer agent.
+
+Outbound review behavior:
+
+1. Fetch the Linear issue and relevant workflow checkpoint comments.
+2. Fetch PR metadata, changed files, commits, and diff context with the helper.
+3. If the PR is merged or closed, report the final PR state and do not post a review comment unless the developer explicitly asks for a post-merge/post-close review.
+4. Spawn the `gwp_reviewer` agent in read-only mode with the Linear issue, checkpoints, PR metadata, changed files, and diff.
+5. Inspect the reviewer output and normalize it to the required PR comment structure if needed.
+6. Post exactly one top-level PR conversation comment with `gh pr comment --body-file`.
+7. Stop cleanly after posting and summarize the PR URL and review result.
+
+The posted PR comment must use this structure:
+
+```md
+## Codex PR Review for GWP-XX
+
+Review result: No blocking findings
+
+## Findings
+- None.
+
+## Test and Validation Notes
+- ...
+
+## Risk Notes
+- Auth:
+- Billing:
+- Stripe:
+- Supabase/data:
+- Privacy:
+- UI:
+- Deployment:
+
+## Follow-ups
+- ...
+```
+
+When there are findings, the review result must be `Findings`, and findings must
+be ordered by severity with file and line references when available. Because the
+developer explicitly invoked this mode, Codex does not need a second approval
+before posting the top-level PR comment.
+
 ## Required verification commands
 
 Before validation and PR creation, Codex must run:
@@ -668,7 +738,7 @@ re-plan, continue implementation, update an open PR, or run a manual PR comment 
 Version 0.1 uses Codex project-scoped custom agents plus local orchestration as
 the primary execution model.
 
-The three phases are implemented as real Codex custom agents defined under
+The planning, development, validation, and outbound review phases are implemented as real Codex custom agents defined under
 `.codex/agents/*.toml` (see "Project-scoped custom agents"). These are required,
 not optional, for version 0.1, because the `sandbox_mode` field in those files is
 what actually enforces the read-only planning and read-only validation
@@ -677,15 +747,15 @@ phase boundaries expressed as `sandbox_mode = "read-only"` cannot.
 
 Do not confuse these custom agents with a skill's optional `agents/openai.yaml`
 file. `agents/openai.yaml` only configures a skill's UI metadata and invocation
-policy; it does not define the planning, development, or validation agents. Those
+policy; it does not define the planning, development, validation, or review agents. Those
 agents must be true custom agents under `.codex/agents/*.toml`.
 
 ### Orchestration model
 
 The `gwp-linear-to-pr` skill runs in the root Codex session, and the root session
-is the sole orchestrator. The root session spawns the planning, development, and
-validation agents directly, in sequence, gated by the human approval and
-validation steps.
+is the sole orchestrator. The root session spawns the planning, development,
+validation, and reviewer agents directly, in sequence, gated by the human
+approval and validation steps where those gates apply.
 
 Constraints to respect, based on current Codex subagent behavior:
 
@@ -693,8 +763,9 @@ Constraints to respect, based on current Codex subagent behavior:
    explicitly request each agent.
 2. The default maximum subagent nesting depth is 1 (the root session is depth 0).
    A spawned agent cannot reliably spawn its own subagent, so the Development
-   Agent must not be expected to spawn the Validation Agent. All three agents are
-   spawned by the root orchestrator.
+   Agent must not be expected to spawn the Validation Agent, and the Reviewer
+   Agent must not post its own GitHub comment. All agents are spawned by the root
+   orchestrator.
 3. Each subagent runs its own model and tool work, so this multi-agent flow
    consumes meaningfully more tokens than a single-agent run. This matters because
    the workflow is distributed across the whole team.
@@ -712,6 +783,7 @@ follow the same phase boundaries in a single local session:
 1. Planning phase is read-only.
 2. Development phase is workspace-write and limited to the approved plan.
 3. Validation phase is read-only and reviews the final diff before PR creation.
+4. Outbound review phase is read-only and produces a PR comment for the root session to post.
 
 Handoff artifacts between phases must include:
 
@@ -723,6 +795,7 @@ Handoff artifacts between phases must include:
 6. Git diff against `main`.
 7. Verification command results.
 8. Validation result.
+9. For outbound review, PR metadata, changed files, diff context, and the final review comment.
 
 ## Planning Agent
 
@@ -1082,6 +1155,8 @@ gwp-linear-workflow/
   scripts/
     gwp_doctor.py          # local preflight/check helper
     gwp_pr_comments.py     # GitHub PR comment/review-thread state helper
+    gwp_pr_review_context.py
+                           # GitHub PR metadata/diff helper for outbound reviews
 
   assets/                  # OPTIONAL: icon/screenshots for the plugin
   README.md
@@ -1093,8 +1168,8 @@ can install the team plugin with
 `codex plugin marketplace add ./` followed by
 `codex plugin add gwp-linear-workflow@gwp-recovery-platform`.
 
-The planning, development, and validation custom agents are not part of the
-plugin bundle. They are project-scoped repository files committed under
+The planning, development, validation, and reviewer custom agents are not part of
+the plugin bundle. They are project-scoped repository files committed under
 `.codex/agents/` in `olena-ageyeva/gwp-recovery-platform` (see "Project-scoped
 custom agents"). The plugin distributes the skills and MCP configuration; the
 repository carries the custom agents and `AGENTS.md`.
@@ -1111,7 +1186,7 @@ Minimal `.codex-plugin/plugin.json` for version 0.1:
 {
   "name": "gwp-linear-workflow",
   "version": "0.1.0",
-  "description": "Local Codex workflow for implementing GWP Recovery Platform Linear issues with planning, tests, validation, PR creation, and Linear status transitions.",
+  "description": "Local Codex workflow for implementing GWP Recovery Platform Linear issues with planning, tests, validation, PR creation, Linear status transitions, PR feedback checks, and outbound PR review comments.",
   "skills": "./skills/",
   "mcpServers": "./.mcp.json"
 }
@@ -1270,7 +1345,7 @@ Suggested content:
 ```md
 ---
 name: gwp-linear-to-pr
-description: Use this skill when the user asks Codex to work on, resume, or check PR comments for a GWP Recovery Platform Linear issue, especially prompts like "Work on Linear issue GWP-26", "resume workflow for GWP-26", or "check PR comments for GWP-26". This workflow fetches the Linear issue, moves it through planning, implementation, validation, PR creation, In Review status, and manual PR feedback checks.
+description: Use this skill when the user asks Codex to work on, resume, check PR comments, or review a PR for a GWP Recovery Platform Linear issue, especially prompts like "Work on Linear issue GWP-26", "resume workflow for GWP-26", "check PR comments for GWP-26", or "review PR for GWP-26". This workflow fetches the Linear issue, moves it through planning, implementation, validation, PR creation, In Review status, manual PR feedback checks, and outbound PR review comments.
 ---
 
 # GWP Linear-to-PR Workflow
@@ -1329,6 +1404,7 @@ a branch, editing files, committing, pushing, or creating a PR.
 29. Post a PR-created checkpoint to Linear.
 30. Stop and tell the developer to run `check PR comments` or `resume workflow` later.
 31. If manually checking PR comments finds feedback requiring changes, produce a follow-up plan, wait for approval, update the branch, rerun verification and validation, push, and checkpoint the follow-up.
+32. If asked to `review PR for GWP-XX`, spawn the read-only Reviewer Agent, produce one structured review, and post exactly one top-level PR comment without editing files or changing Linear status.
 
 ## Hard rules
 
@@ -1512,8 +1588,8 @@ config keys such as `model`, `model_reasoning_effort`, `sandbox_mode`,
 spawned agent sessions.
 
 These agents are the mechanism that enforces the workflow's phase boundaries:
-`sandbox_mode = "read-only"` on the planner and validator is what actually
-prevents file edits, rather than relying on prose instructions alone.
+`sandbox_mode = "read-only"` on the planner, validator, and reviewer is what
+actually prevents file edits, rather than relying on prose instructions alone.
 
 These are distinct from a skill's optional `agents/openai.yaml`, which only
 configures a skill's UI metadata and invocation policy and must not be used to
@@ -1525,13 +1601,14 @@ Creating these agents is a one-time repository setup task, not a per-issue step.
 The implementer (or Codex itself, running this workflow against the build-out
 issue) must:
 
-1. Create the three files below with the contents defined in this section, at
+1. Create the four files below with the contents defined in this section, at
    these exact paths in `olena-ageyeva/gwp-recovery-platform`:
 
    ```text
    .codex/agents/gwp-planner.toml
    .codex/agents/gwp-developer.toml
    .codex/agents/gwp-validator.toml
+   .codex/agents/gwp-reviewer.toml
    ```
 
 2. Commit them to the repository on a branch and merge them via PR, the same way
@@ -1664,6 +1741,44 @@ If not ready, return FAIL with blocking issues, missing criteria, test gaps, and
 Do not edit files.
 Do not change Linear status.
 Do not create a PR.
+"""
+```
+
+### gwp-reviewer.toml
+
+```toml
+name = "gwp_reviewer"
+description = "Read-only PR review agent for GWP Linear issue pull requests."
+
+sandbox_mode = "read-only"
+
+developer_instructions = """
+You are the PR Review Agent for the GWP Recovery Platform.
+
+Your job is to review an existing GitHub pull request associated with a Linear
+issue and produce feedback that the root workflow can post as one top-level PR
+comment.
+
+Review:
+- The Linear issue.
+- Approved-plan, PR-created, PR-comment, and follow-up checkpoints from Linear.
+- The PR title, body, base branch, head branch, changed files, commits, and diff.
+- Test and validation evidence already present in Linear checkpoints or the PR.
+
+Check issue scope, test evidence, secrets, auth and authorization, billing,
+Stripe, Supabase/data access, privacy, UI, and deployment risk.
+
+Return a structured PR comment beginning with:
+
+## Codex PR Review for GWP-XX
+
+Use `Review result: No blocking findings` or `Review result: Findings`, then
+include findings, test and validation notes, risk notes, and follow-ups.
+
+Do not edit files.
+Do not change Linear status.
+Do not create, update, approve, or merge a PR.
+Do not post GitHub comments yourself; the root workflow posts the final comment.
 """
 ```
 
@@ -1850,6 +1965,7 @@ Implement:
    - Planning Agent (`sandbox_mode = "read-only"`)
    - Development Agent (workspace-write)
    - Validation Agent (`sandbox_mode = "read-only"`)
+   - PR Review Agent (`sandbox_mode = "read-only"`)
 7. PR template.
 8. Native Linear GitHub integration for linking and final Done-on-merge behavior.
 9. Plugin `README.md` documenting per-developer onboarding.
