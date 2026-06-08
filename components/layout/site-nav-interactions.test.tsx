@@ -36,6 +36,21 @@ describe("site nav interactions", () => {
     });
   });
 
+  it("closes mobile navigation from the brand link", async () => {
+    render(<SiteNav />);
+    await userEvent.click(screen.getByRole("button", { name: "Toggle navigation" }));
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Find help").length).toBeGreaterThan(1);
+    });
+
+    await userEvent.click(screen.getByRole("link", { name: /Get Whole Project/i }));
+
+    await waitFor(() => {
+      expect(screen.getAllByText("Find help")).toHaveLength(1);
+    });
+  });
+
   it("opens the account dialog", async () => {
     render(<SiteNav />);
     await userEvent.click(screen.getByRole("button", { name: "Sign up / Log in" }));
