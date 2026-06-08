@@ -139,7 +139,7 @@ python3 plugins/gwp-linear-workflow/scripts/gwp_doctor.py
 Windows PowerShell alternative:
 
 ```powershell
-py -3 plugins/gwp-linear-workflow/scripts/gwp_doctor.py
+py -3 .\plugins\gwp-linear-workflow\scripts\gwp_doctor.py
 ```
 
 Do not continue until the doctor reports that the repository, Linear MCP,

@@ -21,7 +21,7 @@ Windows note: In PowerShell, use the Windows Python launcher if `python3` is not
 available:
 
 ```powershell
-py -3 plugins/gwp-linear-workflow/scripts/gwp_doctor.py
+py -3 .\plugins\gwp-linear-workflow\scripts\gwp_doctor.py
 ```
 
 Windows note: GitHub CLI credentials may be stored in Windows Credential
