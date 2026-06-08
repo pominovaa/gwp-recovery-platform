@@ -316,7 +316,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Fetch GWP PR comments and review threads.")
     parser.add_argument("--repo", help=f"GitHub repo, defaults to origin ({EXPECTED_REPO}).")
     parser.add_argument("--pr", type=int, help="Pull request number.")
-    parser.add_argument("--issue-id", help="Linear issue ID, for example GWP-36.")
+    parser.add_argument("--issue-id", help="Linear issue ID, for example GWP-XX.")
     parser.add_argument(
         "--handled-id",
         action="append",

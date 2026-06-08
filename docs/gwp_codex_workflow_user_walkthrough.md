@@ -23,18 +23,14 @@ If needed, move into the repository:
 cd /home/owner/projects/gwp-recovery-platform
 ```
 
-Confirm you are on the workflow implementation branch while the workflow plugin
-is still being tested before merge:
+Confirm the current branch when needed:
 
 ```bash
 git branch --show-current
 ```
 
-For the current pre-merge workflow test, the branch should be:
-
-```text
-gwp-26-linear-to-pr-agentic-workflow
-```
+The workflow creates or resumes issue branches later. Do not run implementation
+commits directly on `main`.
 
 ## 2. Install the local workflow plugin
 
@@ -134,12 +130,6 @@ gwp-linear-to-pr Work on Linear issue GWP-XX
 
 Replace `GWP-XX` with the real Linear issue ID.
 
-For the current smoke test, use:
-
-```text
-gwp-linear-to-pr Work on Linear issue GWP-36
-```
-
 The workflow should:
 
 1. Confirm it is running in the GWP Recovery Platform repository.
@@ -153,12 +143,6 @@ To resume interrupted work, enter:
 
 ```text
 gwp-linear-to-pr resume workflow for GWP-XX
-```
-
-For the current smoke test, enter:
-
-```text
-gwp-linear-to-pr resume workflow for GWP-36
 ```
 
 To check an existing PR once for new review comments, enter:
@@ -243,15 +227,11 @@ Codex must not push or create a PR unless internal validation returns `PASS`.
 ## 11. Create the PR
 
 Only after tests, lint, typecheck, build, and internal validation pass, Codex may
-push the branch and open a GitHub PR.
+push the branch and open a GitHub PR. Any workflow path that changes code must
+commit the changes and push the issue branch to GitHub before it reports
+completion.
 
 For normal issues, the PR targets `main`.
-
-For the current smoke-test issue, the PR must target:
-
-```text
-gwp-26-linear-to-pr-agentic-workflow
-```
 
 The PR body must include:
 
@@ -354,25 +334,22 @@ This is not the same as `review PR comments`. It does not triage existing
 reviewer feedback, edit files, change Linear status, post inline comments,
 approve the PR, or submit an official GitHub review event.
 
-## Smoke-test checklist
+## Workflow checklist
 
-For `GWP-36`, confirm these observations:
+For any issue, confirm these observations:
 
 1. Linear issue moves from `Todo` to `In Progress`.
 2. Approved implementation plan is posted as a Linear comment.
-3. Branch name includes `GWP-36`.
-4. Commit message includes `GWP-36`.
+3. Branch name includes `GWP-XX`.
+4. Commit message includes `GWP-XX`.
 5. Validation returns `PASS` before push or PR creation.
-6. PR targets `gwp-26-linear-to-pr-agentic-workflow`.
+6. PR targets the intended upstream base branch.
 7. PR body includes the Linear issue, acceptance criteria, verification,
    validation, risk notes, screenshots or preview notes, and follow-ups.
 8. Linear issue moves to `In Review` after PR creation.
 9. Linear-GitHub integration links the PR to the issue.
-10. Resume mode detects PR #7 and the unresolved Copilot review thread.
+10. Resume mode detects the linked PR and any unhandled review feedback.
 11. A PR-feedback follow-up plan is presented before any code changes.
-
-Do not merge the sample smoke-test PR into `main`. Close or discard it after
-inspection unless the team decides the content change should be kept.
 
 ## Hard boundaries
 

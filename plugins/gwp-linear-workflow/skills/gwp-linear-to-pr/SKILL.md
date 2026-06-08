@@ -1,6 +1,6 @@
 ---
 name: gwp-linear-to-pr
-description: "Use this skill when the user asks Codex to work on, resume, check PR comments, or review a PR for a GWP Recovery Platform Linear issue, especially prompts like Work on Linear issue GWP-26, resume workflow for GWP-26, check PR comments for GWP-26, review PR comments for GWP-26, or review PR for GWP-26. This workflow fetches the Linear issue, plans the change, waits for approval, implements with tests, validates acceptance criteria, creates or updates a GitHub PR, handles PR feedback through manual one-time checks, and can post an outbound Codex PR review comment."
+description: "Use this skill when the user asks Codex to work on, resume, check PR comments, or review a PR for a GWP Recovery Platform Linear issue, especially prompts like Work on Linear issue GWP-XX, resume workflow for GWP-XX, check PR comments for GWP-XX, review PR comments for GWP-XX, or review PR for GWP-XX. This workflow fetches the Linear issue, plans the change, waits for approval, implements with tests, validates acceptance criteria, creates or updates a GitHub PR, handles PR feedback through manual one-time checks, and can post an outbound Codex PR review comment."
 ---
 
 # GWP Linear-to-PR Workflow
@@ -13,7 +13,7 @@ repository. Follow that spec when it is more specific than this summary.
 ## Scope
 
 Use this skill only for `olena-ageyeva/gwp-recovery-platform` and Linear issues
-with IDs like `GWP-26`.
+whose IDs match the project issue key pattern, such as `GWP-XX`.
 
 Do not use Codex cloud agents from Linear or GitHub. Do not enable GitHub-side
 Codex review.
@@ -28,20 +28,20 @@ Default to read-only explain or plan mode unless the request contains all of:
 
 1. Explicit invocation of this workflow or an unmistakable request to use it.
 2. An implementation/resume/comment-check/review verb such as `work on`, `implement`, `build`, `resume`, `check PR comments`, `review PR comments`, `review PR`, or `review pull request`.
-3. A valid Linear issue ID like `GWP-26`.
+3. A valid Linear issue ID matching the project issue key pattern.
 
 If the request is ambiguous, fetch/read only what is needed to explain the issue
 and ask the developer to confirm before entering work mode.
 
 Recognize these work-mode prompts:
 
-- `work on Linear issue GWP-26`
-- `resume workflow for GWP-26`
-- `resume GWP-26`
-- `check PR comments for GWP-26`
-- `review PR comments for GWP-26`
-- `review PR for GWP-26`
-- `review pull request for GWP-26`
+- `work on Linear issue GWP-XX`
+- `resume workflow for GWP-XX`
+- `resume GWP-XX`
+- `check PR comments for GWP-XX`
+- `review PR comments for GWP-XX`
+- `review PR for GWP-XX`
+- `review pull request for GWP-XX`
 
 ## Resume Mode
 
@@ -70,7 +70,7 @@ Infer the resume stage from Linear, Git, and GitHub state:
 5. PR is merged or closed: report final PR state and do not move Linear to `Done`.
 
 Outbound PR review mode is separate from resume mode. If the developer asks
-`review PR for GWP-26` or `review pull request for GWP-26`, run the outbound PR
+`review PR for GWP-XX` or `review pull request for GWP-XX`, run the outbound PR
 review workflow below instead of the manual PR comment check.
 
 ## Required Preflight
@@ -142,7 +142,12 @@ fork-based PR only after the developer explicitly approves that fallback.
 24. Create a GitHub PR with the Linear issue ID in the title and the required PR body sections.
 25. Use `gwp-linear-ops` to move the Linear issue to `In Review`.
 26. Use `gwp-linear-ops` to post a PR-created checkpoint comment to Linear.
-27. Stop cleanly and tell the developer to use `gwp-linear-to-pr check PR comments for GWP-26` or `gwp-linear-to-pr resume workflow for GWP-26` when they want Codex to inspect PR feedback.
+27. Stop cleanly and tell the developer to use `gwp-linear-to-pr check PR comments for GWP-XX` or `gwp-linear-to-pr resume workflow for GWP-XX` when they want Codex to inspect PR feedback.
+
+Any workflow execution that edits repository files must not stop with local-only
+changes or unpushed commits. After verification and validation pass, the final
+code-delivery step is to commit the issue-scoped changes and push the issue
+branch to the upstream GitHub repository before reporting completion.
 
 ## Manual PR Comment Check
 
@@ -153,7 +158,7 @@ running after the check completes.
 Use this helper to fetch PR feedback:
 
 ```bash
-python3 plugins/gwp-linear-workflow/scripts/gwp_pr_comments.py --issue-id GWP-26
+python3 plugins/gwp-linear-workflow/scripts/gwp_pr_comments.py --issue-id GWP-XX
 ```
 
 Pass `--handled-id <id>` for every GitHub comment, review, review-thread, or
@@ -178,19 +183,19 @@ For approved PR-feedback changes:
 4. Spawn the `gwp_validator` agent to validate the updated committed diff.
 5. Push the updated branch only after validation returns PASS.
 6. Use `gwp-linear-ops` to post a follow-up implementation checkpoint and a PR-comment checkpoint with handled GitHub IDs.
-7. Stop cleanly and tell the developer to run `gwp-linear-to-pr check PR comments for GWP-26` again when they want another one-time check.
+7. Stop cleanly and tell the developer to run `gwp-linear-to-pr check PR comments for GWP-XX` again when they want another one-time check.
 
 ## Outbound PR Review
 
 Run this mode when the developer asks Codex to review the PR for a Linear issue,
-using prompts such as `review PR for GWP-26` or `review pull request for GWP-26`.
+using prompts such as `review PR for GWP-XX` or `review pull request for GWP-XX`.
 This mode posts one top-level PR conversation comment. It is not the same as
 `review PR comments`, which triages existing reviewer feedback.
 
 Use this helper to fetch PR review context:
 
 ```bash
-python3 plugins/gwp-linear-workflow/scripts/gwp_pr_review_context.py --issue-id GWP-26
+python3 plugins/gwp-linear-workflow/scripts/gwp_pr_review_context.py --issue-id GWP-XX
 ```
 
 Review behavior:
@@ -200,7 +205,7 @@ Review behavior:
 3. If the PR is merged or closed, report the final PR state and do not post a review comment unless the developer explicitly asks for a post-merge/post-close review.
 4. Spawn the `gwp_reviewer` agent in read-only mode with the Linear issue, checkpoints, PR metadata, changed files, and diff.
 5. Inspect the reviewer output before posting. It must use this exact top-level structure:
-   - `## Codex PR Review for GWP-26`
+   - `## Codex PR Review for GWP-XX`
    - `Review result: No blocking findings` or `Review result: Findings`
    - `## Findings`
    - `## Test and Validation Notes`
@@ -223,5 +228,6 @@ Outbound PR review hard rules:
 - Never create or update a PR if internal validation fails.
 - Never move an issue to `Done`; `Done` means PR merged.
 - Never commit secrets or `.env.local`.
+- Never stop a code-changing workflow with uncommitted changes or unpushed commits after verification and validation pass.
 - Never broaden scope without developer approval.
 - Ask questions when requirements are unclear.

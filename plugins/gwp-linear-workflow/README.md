@@ -56,13 +56,15 @@ standalone Linear skill. Each developer still needs personal Linear OAuth.
 From the repository root, ask Codex:
 
 ```text
-gwp-linear-to-pr Work on Linear issue GWP-26
+gwp-linear-to-pr Work on Linear issue GWP-XX
 ```
 
 The workflow fetches the issue, runs preflight, moves the issue to In Progress,
 creates an issue branch, produces a read-only plan, waits for developer
 approval, implements with tests, validates the committed diff, opens a GitHub PR,
-moves the issue to In Review, and stops cleanly.
+moves the issue to In Review, and stops cleanly. Any workflow path that changes
+code commits the changes and pushes the issue branch to GitHub before it reports
+completion.
 
 After PR creation, run a manual PR comment check when you want Codex to inspect
 new feedback.
@@ -70,20 +72,20 @@ new feedback.
 To resume interrupted work or continue from an open PR, ask Codex:
 
 ```text
-gwp-linear-to-pr resume workflow for GWP-26
+gwp-linear-to-pr resume workflow for GWP-XX
 ```
 
 To check an existing PR once for new feedback without starting a new issue branch,
 ask Codex:
 
 ```text
-gwp-linear-to-pr check PR comments for GWP-26
+gwp-linear-to-pr check PR comments for GWP-XX
 ```
 
 or:
 
 ```text
-gwp-linear-to-pr review PR comments for GWP-26
+gwp-linear-to-pr review PR comments for GWP-XX
 ```
 
 When new PR feedback may require code changes, Codex produces a follow-up plan
@@ -95,7 +97,7 @@ To have Codex review the PR itself and post one structured top-level PR comment,
 ask:
 
 ```text
-gwp-linear-to-pr review PR for GWP-26
+gwp-linear-to-pr review PR for GWP-XX
 ```
 
 This is separate from `review PR comments`: it does not triage incoming feedback

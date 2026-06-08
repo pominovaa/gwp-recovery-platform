@@ -26,7 +26,7 @@ agents locally; trusting the project lets Codex load them.
 The developer opens the repo in Codex and enters:
 
 ```text
-gwp-linear-to-pr Work on Linear issue GWP-26
+gwp-linear-to-pr Work on Linear issue GWP-XX
 ```
 
 From there:
@@ -56,7 +56,8 @@ From there:
    results.
 6. **Open PR.** Only after validation passes, Codex pushes the branch, opens a
    GitHub PR, moves the Linear issue to `In Review`, and posts a PR-created
-   checkpoint to Linear.
+   checkpoint to Linear. Any workflow path that changes code commits the changes
+   and pushes the issue branch to GitHub before it reports completion.
 
 ## After the PR
 
@@ -84,7 +85,7 @@ When the developer wants Codex to review the current PR itself and publish
 feedback, they ask:
 
 ```text
-gwp-linear-to-pr review PR for GWP-26
+gwp-linear-to-pr review PR for GWP-XX
 ```
 
 This outbound review path is separate from `review PR comments`. Codex resolves
@@ -98,25 +99,25 @@ submit an official GitHub review event.
 The developer can resume from any point with:
 
 ```text
-gwp-linear-to-pr resume workflow for GWP-26
+gwp-linear-to-pr resume workflow for GWP-XX
 ```
 
 or check an existing PR with:
 
 ```text
-gwp-linear-to-pr check PR comments for GWP-26
+gwp-linear-to-pr check PR comments for GWP-XX
 ```
 
 or:
 
 ```text
-gwp-linear-to-pr review PR comments for GWP-26
+gwp-linear-to-pr review PR comments for GWP-XX
 ```
 
 To publish a Codex-authored review comment on the PR, ask:
 
 ```text
-gwp-linear-to-pr review PR for GWP-26
+gwp-linear-to-pr review PR for GWP-XX
 ```
 
 On resume, Codex inspects Linear comments, local branches, remote branches,
@@ -132,20 +133,6 @@ Linear comments are the durable checkpoint store. They capture the approved plan
 PR-created state, handled GitHub feedback IDs, and follow-up implementation
 results so a later Codex session can resume without relying on local untracked
 files.
-
-## Current smoke test
-
-For the current GWP-36 smoke-test PR, after reinstalling the updated plugin and
-starting a new Codex thread, the developer runs:
-
-```text
-gwp-linear-to-pr resume workflow for GWP-36
-```
-
-Codex should detect PR #7, find the unresolved Copilot review thread, present a
-follow-up plan to reword the Find Help support-scope note, wait for approval,
-update the PR branch, rerun verification and validation, push the update, and
-stop cleanly.
 
 ## Failure behavior
 

@@ -19,7 +19,7 @@ codex mcp login linear
 ## Scope
 
 Use only for GWP Recovery Platform work in the expected Linear workspace and for
-issues with IDs like `GWP-26`.
+issues whose IDs match the project issue key pattern, such as `GWP-XX`.
 
 Do not use this skill to create unrelated Linear issues, projects, labels, or
 cycles unless the developer explicitly asks for that separate Linear task.

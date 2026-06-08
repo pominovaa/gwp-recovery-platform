@@ -33,6 +33,8 @@ npm run build
 
 9. Do not create a PR unless tests, lint, typecheck, and build pass.
 10. Do not create a PR unless internal validation passes.
+11. For any workflow path that changes repository files, commit the changes and
+    push the issue branch to GitHub before reporting completion.
 
 ## Linear Statuses
 

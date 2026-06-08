@@ -7,7 +7,7 @@ This document defines the local Codex agentic workflow for implementing Linear i
 The workflow starts when a developer, working locally in Codex CLI/IDE inside the GitHub repository, asks:
 
 ```text
-Work on Linear issue GWP-26
+Work on Linear issue GWP-XX
 ```
 
 Codex must then fetch the Linear issue, move it through the correct workflow
@@ -115,13 +115,13 @@ implementation/resume/comment-check/review verb such as "work on", "implement",
 Recognized work-mode prompts include:
 
 ```text
-work on Linear issue GWP-26
-resume workflow for GWP-26
-resume GWP-26
-check PR comments for GWP-26
-review PR comments for GWP-26
-review PR for GWP-26
-review pull request for GWP-26
+work on Linear issue GWP-XX
+resume workflow for GWP-XX
+resume GWP-XX
+check PR comments for GWP-XX
+review PR comments for GWP-XX
+review PR for GWP-XX
+review pull request for GWP-XX
 ```
 
 ### Explain or plan mode
@@ -175,7 +175,7 @@ Codex must infer the resume stage from Linear, Git, and GitHub state:
 5. If the PR is merged or closed, report the final PR state and do not move Linear to `Done`.
 
 Outbound PR review mode is separate from resume mode. If the developer asks to
-`review PR for GWP-26` or `review pull request for GWP-26`, Codex must run the
+`review PR for GWP-XX` or `review pull request for GWP-XX`, Codex must run the
 outbound PR review workflow instead of the manual PR comment check.
 
 ## Required preflight
@@ -310,10 +310,10 @@ Avoid relying on Linear GitHub automation for `Todo → In Progress` because the
 
 Avoid relying on Linear GitHub automation for `In Progress → In Review` unless the team wants PR creation alone to trigger review. In this workflow, Codex moves the issue to `In Review` after validation passes and the PR is created.
 
-During the first GWP-26 test PR, Codex must verify and document the observed
-GitHub integration behavior for branch names, PR titles, PR body references, and
-merge behavior. Do not assume a closing or non-closing keyword works until it has
-been observed for the upstream repository configuration.
+During workflow rollout, Codex must verify and document the observed GitHub
+integration behavior for branch names, PR titles, PR body references, and merge
+behavior. Do not assume a closing or non-closing keyword works until it has been
+observed for the upstream repository configuration.
 
 ## Branch naming convention
 
@@ -324,17 +324,17 @@ Preferred format is the branch name copied from Linear when available.
 Accepted formats include:
 
 ```text
-gwp-26-short-description
-bostonvip/gwp-26-short-description
-GWP-26-short-description
+gwp-xx-short-description
+developer/gwp-xx-short-description
+GWP-XX-short-description
 ```
 
 Examples:
 
 ```text
-gwp-26-add-account-recovery-flow
-bostonvip/gwp-42-fix-stripe-checkout-error
-GWP-51-improve-mobile-dashboard-layout
+gwp-xx-add-account-recovery-flow
+developer/gwp-xx-fix-checkout-error
+GWP-XX-improve-mobile-dashboard-layout
 ```
 
 Codex must never commit directly to `main`.
@@ -344,14 +344,14 @@ Before creating a branch, Codex should run:
 ```bash
 git checkout main
 git pull
-git checkout -b gwp-26-short-description
+git checkout -b gwp-xx-short-description
 ```
 
 If `git pull` fails or `main` has diverged locally, Codex must stop and report the
 failure rather than branching from a stale or conflicted `main`. Codex must not
 attempt to force-resolve `main` automatically.
 
-Replace `GWP-26` and `short-description` with the actual issue ID and issue slug.
+Replace `GWP-XX` and `short-description` with the actual issue ID and issue slug.
 
 Branch matching must be case-insensitive for the issue ID. The important rule is
 that the branch contains the Linear issue ID and targets the upstream repository.
@@ -363,7 +363,7 @@ Every commit created by Codex should include the Linear issue ID.
 Preferred format:
 
 ```text
-GWP-26: implement account recovery flow
+GWP-XX: implement account recovery flow
 ```
 
 If multiple commits are necessary, all should include the issue ID.
@@ -383,7 +383,7 @@ Every PR created by Codex must include the Linear issue ID.
 Preferred format:
 
 ```text
-GWP-26: Add account recovery flow
+GWP-XX: Add account recovery flow
 ```
 
 ## PR body convention
@@ -391,7 +391,7 @@ GWP-26: Add account recovery flow
 Every PR body must include:
 
 ```md
-Linear issue: GWP-26
+Linear issue: GWP-XX
 
 ## Summary
 - ...
@@ -426,13 +426,13 @@ The PR should use non-closing Linear language unless the team specifically wants
 Recommended PR body wording:
 
 ```text
-Part of GWP-26
+Part of GWP-XX
 ```
 
 If the Linear GitHub integration is configured to move issues to `Done` on PR merge, then closing words may be used deliberately:
 
 ```text
-Fixes GWP-26
+Fixes GWP-XX
 ```
 
 Use closing words only when the team wants PR merge to mean the Linear issue is done.
@@ -448,7 +448,7 @@ be created.
 
    ```bash
    git add -A
-   git commit -m "GWP-26: implement account recovery flow"
+   git commit -m "GWP-XX: implement account recovery flow"
    ```
 
    The Validation Agent reviews this committed diff (`git diff main...HEAD`), not
@@ -458,15 +458,15 @@ be created.
    upstream repository:
 
    ```bash
-   git push -u origin gwp-26-short-description
+   git push -u origin gwp-xx-short-description
    ```
 
 3. Create the PR against upstream `main` using the GitHub CLI (or an equivalent
    connector) with the issue ID in the title and the PR body convention:
 
    ```bash
-   gh pr create --base main --head gwp-26-short-description \
-     --title "GWP-26: Add account recovery flow" \
+   gh pr create --base main --head gwp-xx-short-description \
+     --title "GWP-XX: Add account recovery flow" \
      --body-file <generated PR body>
    ```
 
@@ -474,6 +474,13 @@ be created.
 
 If commits already exist on the branch (resume mode), Codex must not duplicate
 them; it commits only new changes and pushes the updated branch.
+
+Any workflow execution that changes repository files must not stop with
+local-only changes or unpushed commits. After required verification and
+validation pass, the final code-delivery step before reporting completion is to
+commit the issue-scoped changes and push the issue branch to the upstream GitHub
+repository. Read-only modes such as explain/plan and outbound PR review do not
+commit or push.
 
 ## Manual PR comment checks
 
@@ -520,7 +527,7 @@ the original implementation:
 GitHub review comments are read with the plugin-local helper:
 
 ```bash
-python3 plugins/gwp-linear-workflow/scripts/gwp_pr_comments.py --issue-id GWP-26
+python3 plugins/gwp-linear-workflow/scripts/gwp_pr_comments.py --issue-id GWP-XX
 ```
 
 Codex must pass one `--handled-id <id>` argument for each GitHub comment,
@@ -529,8 +536,8 @@ latest Linear PR-comment checkpoint.
 
 ## Outbound PR reviews
 
-When the developer asks to `review PR for GWP-26` or `review pull request for
-GWP-26`, Codex reviews the GitHub PR associated with the Linear issue and posts
+When the developer asks to `review PR for GWP-XX` or `review pull request for
+GWP-XX`, Codex reviews the GitHub PR associated with the Linear issue and posts
 one structured top-level PR conversation comment. This mode is distinct from
 `review PR comments`, which triages incoming reviewer feedback.
 
@@ -542,7 +549,7 @@ a PR, post inline comments, or submit an official GitHub review event.
 GitHub PR review context is read with the plugin-local helper:
 
 ```bash
-python3 plugins/gwp-linear-workflow/scripts/gwp_pr_review_context.py --issue-id GWP-26
+python3 plugins/gwp-linear-workflow/scripts/gwp_pr_review_context.py --issue-id GWP-XX
 ```
 
 The helper resolves the PR from the issue ID or explicit PR number, verifies the
@@ -677,6 +684,9 @@ After approval, Development Agent updates branch, verification passes, Validatio
   ↓
 Post PR-comment/follow-up checkpoints to Linear and stop
 ```
+
+For any code-changing path, Codex must commit the final changes and push the
+issue branch to GitHub before it reports workflow completion.
 
 For read-only explain or plan mode, Codex fetches the issue, inspects the repo,
 and stops after the Planning Agent output. It must not run the work-mode status,
@@ -826,7 +836,7 @@ The Planning Agent receives:
 The Planning Agent must produce:
 
 ```md
-# Implementation Plan for GWP-26
+# Implementation Plan for GWP-XX
 
 ## Issue Summary
 Brief explanation of what the issue asks for.
@@ -1345,7 +1355,7 @@ Suggested content:
 ```md
 ---
 name: gwp-linear-to-pr
-description: Use this skill when the user asks Codex to work on, resume, check PR comments, or review a PR for a GWP Recovery Platform Linear issue, especially prompts like "Work on Linear issue GWP-26", "resume workflow for GWP-26", "check PR comments for GWP-26", or "review PR for GWP-26". This workflow fetches the Linear issue, moves it through planning, implementation, validation, PR creation, In Review status, manual PR feedback checks, and outbound PR review comments.
+description: Use this skill when the user asks Codex to work on, resume, check PR comments, or review a PR for a GWP Recovery Platform Linear issue, especially prompts like "Work on Linear issue GWP-XX", "resume workflow for GWP-XX", "check PR comments for GWP-XX", or "review PR for GWP-XX". This workflow fetches the Linear issue, moves it through planning, implementation, validation, PR creation, In Review status, manual PR feedback checks, and outbound PR review comments.
 ---
 
 # GWP Linear-to-PR Workflow
@@ -1358,9 +1368,10 @@ Use this skill only for the repository:
 
 `olena-ageyeva/gwp-recovery-platform`
 
-Use this skill only for Linear issues with IDs like:
+Use this skill only for Linear issues whose IDs match the project issue key
+pattern, such as:
 
-`GWP-26`
+`GWP-XX`
 
 Do not use Codex cloud agents from Linear or GitHub.
 
@@ -1808,7 +1819,7 @@ Purpose:
 Warn or block if the current branch does not contain a Linear issue ID like:
 
 ```text
-GWP-26
+GWP-XX
 ```
 
 ### guard_no_secret_commit.py
@@ -1915,12 +1926,12 @@ Summarize:
 When the workflow completes successfully, Codex should respond with:
 
 ```md
-## Completed GWP-26
+## Completed GWP-XX
 
 Status:
 - Linear: In Review
 - GitHub PR: <PR URL>
-- Branch: GWP-26-short-description
+- Branch: GWP-XX-short-description
 
 Verification:
 - npm test: passed
