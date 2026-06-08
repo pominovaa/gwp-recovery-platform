@@ -11,11 +11,14 @@ describe("root layout", () => {
   it("renders children in the html document", () => {
     const html = renderToStaticMarkup(
       <RootLayout>
-        <main>Page content</main>
+        <section>Page content</section>
       </RootLayout>
     );
 
     expect(html).toContain("<html");
+    expect(html).toContain("<main>");
     expect(html).toContain("Page content");
+    expect(html).toContain("Get Whole Project");
+    expect(html).toContain("Privacy");
   });
 });
