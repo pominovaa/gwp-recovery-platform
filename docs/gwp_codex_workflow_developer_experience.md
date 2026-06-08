@@ -17,6 +17,18 @@ Codex, and runs the workflow doctor:
 python3 plugins/gwp-linear-workflow/scripts/gwp_doctor.py
 ```
 
+Windows note: In PowerShell, use the Windows Python launcher if `python3` is not
+available:
+
+```powershell
+py -3 plugins/gwp-linear-workflow/scripts/gwp_doctor.py
+```
+
+Windows note: GitHub CLI credentials may be stored in Windows Credential
+Manager. If `gh auth status` passes in PowerShell or Git Bash but fails inside a
+restricted Codex command sandbox, treat that as the same sandbox/keyring false
+negative described in the workflow spec.
+
 The custom planning, development, validation, and reviewer agents are committed
 to the repository under `.codex/agents/*.toml`. Developers do not create those
 agents locally; trusting the project lets Codex load them.

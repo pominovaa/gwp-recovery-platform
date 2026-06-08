@@ -13,6 +13,10 @@ Markdown viewers, fenced code blocks show a copy icon automatically. The command
 blocks intentionally do not include shell prompt characters, so copied commands
 can be pasted directly into the terminal.
 
+Windows note: These examples use POSIX-style paths and command syntax. On
+Windows, use Git Bash as the closest match, or use PowerShell with Windows paths
+such as `C:\Users\<you>\projects\gwp-recovery-platform`.
+
 ## 1. Start from the repository root
 
 Open a terminal in the GWP Recovery Platform repository.
@@ -20,7 +24,13 @@ Open a terminal in the GWP Recovery Platform repository.
 If needed, move into the repository:
 
 ```bash
-cd /home/owner/projects/gwp-recovery-platform
+cd /your/path/to/projects/gwp-recovery-platform
+```
+
+Windows PowerShell alternative:
+
+```powershell
+Set-Location C:\Users\<you>\projects\gwp-recovery-platform
 ```
 
 Confirm the current branch when needed:
@@ -38,6 +48,12 @@ Add this repository as a Codex plugin marketplace:
 
 ```bash
 codex plugin marketplace add ./
+```
+
+Windows PowerShell alternative:
+
+```powershell
+codex plugin marketplace add .
 ```
 
 Install the workflow plugin from that marketplace:
@@ -92,6 +108,10 @@ re-authenticate. This can happen because `gh` stores credentials in the desktop
 keyring, while a restricted Codex command sandbox may not be able to read that
 keyring or reach the network.
 
+Windows note: GitHub CLI credentials may be stored in Windows Credential Manager.
+If Codex cannot read those credentials but `gh auth status` passes in PowerShell
+or Git Bash, treat it as the same sandbox/keyring false negative.
+
 ## 5. Trust the repository in Codex
 
 Trust this repository in Codex when prompted. The workflow depends on
@@ -109,8 +129,17 @@ which is not the intended team workflow.
 
 Run the workflow doctor from the repository root:
 
+Windows note: Use `py -3` or `python` instead of `python3` if that is the Python
+3 command available in your terminal.
+
 ```bash
 python3 plugins/gwp-linear-workflow/scripts/gwp_doctor.py
+```
+
+Windows PowerShell alternative:
+
+```powershell
+py -3 plugins/gwp-linear-workflow/scripts/gwp_doctor.py
 ```
 
 Do not continue until the doctor reports that the repository, Linear MCP,
