@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import RootLayout, { metadata } from "@/app/layout";
 
@@ -20,5 +22,11 @@ describe("root layout", () => {
     expect(html).toContain("Page content");
     expect(html).toContain("Get Whole Project");
     expect(html).toContain("Privacy");
+  });
+
+  it("reserves the scrollbar gutter so the shared nav stays aligned between routes", () => {
+    const css = readFileSync(join(process.cwd(), "app", "globals.css"), "utf8");
+
+    expect(css).toContain("scrollbar-gutter: stable;");
   });
 });
