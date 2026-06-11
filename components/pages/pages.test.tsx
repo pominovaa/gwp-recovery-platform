@@ -28,6 +28,20 @@ describe("content pages", () => {
     expect(html).toContain("does not provide medical care, crisis support, diagnosis, treatment, or guarantees");
   });
 
+  it("renders Equip with treatment-provider metadata and boundaries", () => {
+    const html = renderToStaticMarkup(<FindHelpPage />);
+
+    expect(html).toContain("Equip");
+    expect(html).toContain('href="https://equip.health/our-treatment"');
+    expect(html).toContain("Treatment provider resource");
+    expect(html).toContain("People and families considering virtual eating-disorder treatment support");
+    expect(html).toContain("Insurance coverage and consultation pathways may be available");
+    expect(html).toContain("Virtual eating-disorder treatment information");
+    expect(html).toContain("multidisciplinary care options");
+    expect(html).toContain("not endorsements or clinical recommendations");
+    expect(html).toContain("does not provide medical care, crisis support, diagnosis, treatment, or guarantees");
+  });
+
   it("renders heal page", () => {
     const html = renderToStaticMarkup(<HealPage />);
 

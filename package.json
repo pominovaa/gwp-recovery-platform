@@ -8,7 +8,8 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@netlify/plugin-nextjs": "^5.15.11",
