@@ -39,10 +39,12 @@ describe("find support components", () => {
     expect(html).not.toContain("rounded-[2rem]");
   });
 
-  it("renders the full find support page with navigation", () => {
+  it("renders the find support page content without the global shell", () => {
     const html = renderToStaticMarkup(<FindSupportPage />);
 
-    expect(html).toContain("Get Whole Project");
-    expect(html).toContain("Donate");
+    expect(html).toContain("Recovery is hard. Finding support should not be.");
+    expect(html).not.toContain("<header");
+    expect(html).not.toContain("<main");
+    expect(html).not.toContain("<footer");
   });
 });

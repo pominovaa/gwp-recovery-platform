@@ -1,7 +1,5 @@
 // @ts-nocheck
 import { ArrowRight, BookOpenText, Check, ClipboardList, EyeOff, FileText, Heart, Home, LifeBuoy, ShieldCheck, Users } from "lucide-react";
-import { SiteFooter } from "@/components/layout/site-footer";
-import { SiteNav } from "@/components/layout/site-nav";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -55,15 +53,17 @@ const storyVideos = [
   },
 ];
 
-function PageFrame({ children }: { children: React.ReactNode }) {
-  return (
-    <div id="top" className="min-h-screen bg-[radial-gradient(circle_at_top_left,#f8f3ed,transparent_34%),linear-gradient(180deg,#fffaf4_0%,#ffffff_42%,#f7f7f5_100%)] text-stone-950">
-      <SiteNav />
-      <main>{children}</main>
-      <SiteFooter />
-    </div>
-  );
-}
+const reviewedResources = [
+  {
+    name: "Liv Label Free",
+    url: "https://www.livlabelfree.com/",
+    category: "Neurodiversity-affirming ED recovery",
+    audience: "Autistic and neurodivergent people, caregivers, families, and supporters",
+    cost: "Free educational materials and paid coaching or books",
+    description:
+      "Resource site from an autistic eating-disorder recovery coach with lived-experience education, podcast and blog content, books, private coaching, and group coaching.",
+  },
+];
 
 function PageHeader({ eyebrow, title, children }: { eyebrow: string; title: string; children: React.ReactNode }) {
   return (
@@ -79,7 +79,7 @@ function PageHeader({ eyebrow, title, children }: { eyebrow: string; title: stri
 
 export function FindHelpPage() {
   return (
-    <PageFrame>
+    <>
       <PageHeader eyebrow="Find Help" title="Urgent help comes first.">
         The free resource hub is designed for immediate direction: emergency warning signs, crisis resources, provider-call prep, and family support basics.
       </PageHeader>
@@ -100,40 +100,78 @@ export function FindHelpPage() {
           ))}
         </div>
       </section>
-    </PageFrame>
+      <section className="px-5 pb-24">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-8 max-w-3xl">
+            <div className="mb-3 text-sm font-semibold uppercase tracking-[0.25em] text-stone-500">Reviewed Resources</div>
+            <h2 className="text-3xl font-semibold tracking-tight text-stone-950 md:text-4xl">Recovery resources to evaluate with care.</h2>
+            <p className="mt-5 text-base leading-7 text-stone-600">
+              These listings are informational starting points, not endorsements or clinical recommendations. Check fit, credentials, safety, cost, and care needs before engaging with any service.
+            </p>
+          </div>
+          <div className="grid gap-5 lg:grid-cols-2">
+            {reviewedResources.map((resource) => (
+              <Card key={resource.name} className="rounded-[2rem] border-stone-200 bg-white shadow-sm">
+                <CardContent className="p-7">
+                  <div className="mb-4 flex flex-wrap gap-2">
+                    <span className="rounded-full bg-stone-100 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-stone-600">{resource.category}</span>
+                    <span className="rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-amber-900">{resource.cost}</span>
+                  </div>
+                  <h3 className="text-2xl font-semibold text-stone-950">{resource.name}</h3>
+                  <p className="mt-3 text-sm font-semibold text-stone-700">Audience: {resource.audience}</p>
+                  <p className="mt-4 leading-7 text-stone-600">{resource.description}</p>
+                  <p className="mt-4 text-sm leading-6 text-stone-500">
+                    GWP does not provide medical care, crisis support, diagnosis, treatment, or guarantees of recovery through this resource.
+                  </p>
+                  <a href={resource.url} target="_blank" rel="noreferrer" className="mt-6 inline-flex min-h-11 items-center justify-center rounded-full bg-stone-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-stone-800">
+                    Open resource <ArrowRight className="ml-2 h-5 w-5" />
+                  </a>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+    </>
   );
 }
 
 export function HealPage() {
   return (
-    <PageFrame>
-      <PageHeader eyebrow="Heal" title="Support for the hard days.">
-        Practical tools for moments when recovery feels loud: coping cards, meal-support reflections, treatment notes, and private journaling without triggering metrics.
-      </PageHeader>
-      <section className="px-5 pb-24">
+    <>
+      <section className="px-5 py-20">
+        <div className="mx-auto mb-10 max-w-3xl text-center">
+          <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-stone-500">Heal</p>
+          <h1 className="text-3xl font-semibold tracking-tight text-stone-950 md:text-5xl">Support for the hard days.</h1>
+          <p className="mt-5 text-lg leading-8 text-stone-600">
+            Practical tools for moments when recovery feels loud: coping cards, meal-support reflections, treatment notes, and private journaling without triggering metrics.
+          </p>
+        </div>
         <div className="mx-auto grid max-w-7xl gap-5 md:grid-cols-3">
           {[
             [Heart, "Meal Support Reflection", "Reflect on distress, emotions, support used, and what helped without calories, weight, portions, or comparison."],
             [ClipboardList, "Recovery Binder", "Keep provider questions, appointments, school notes, insurance calls, and treatment timeline in one private place."],
             [ShieldCheck, "Safety Guardrails", "Product rules are designed to remove numbers, triggering details, PHI, self-harm methods, and peer medical advice."],
           ].map(([Icon, title, text]) => (
-            <Card key={String(title)} className="rounded-[2rem] border-stone-200 bg-white shadow-sm">
+            <Card key={String(title)} className="rounded-[2rem] border-stone-200 bg-white/80 shadow-sm">
               <CardContent className="p-7">
-                <Icon className="mb-5 h-7 w-7 text-stone-900" />
-                <h2 className="text-xl font-semibold text-stone-950">{title}</h2>
-                <p className="mt-3 leading-7 text-stone-600">{text}</p>
+                <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-stone-100 text-stone-900">
+                  <Icon className="h-6 w-6" />
+                </div>
+                <h2 className="mb-3 text-xl font-semibold text-stone-950">{title}</h2>
+                <p className="leading-7 text-stone-600">{text}</p>
               </CardContent>
             </Card>
           ))}
         </div>
       </section>
-    </PageFrame>
+    </>
   );
 }
 
 export function LivePage() {
   return (
-    <PageFrame>
+    <>
       <PageHeader eyebrow="Live" title="Recovery is not only about symptoms.">
         It is also about school, family, identity, confidence, routines, and feeling like life can become yours again.
       </PageHeader>
@@ -153,13 +191,13 @@ export function LivePage() {
           ))}
         </div>
       </section>
-    </PageFrame>
+    </>
   );
 }
 
 export function GivePage() {
   return (
-    <PageFrame>
+    <>
       <PageHeader eyebrow="Give" title="Stories that give hope forward.">
         Users can submit anonymous recovery stories, but stories are moderated before publishing to protect privacy and reduce harm.
       </PageHeader>
@@ -193,13 +231,13 @@ export function GivePage() {
           </Card>
         </div>
       </section>
-    </PageFrame>
+    </>
   );
 }
 
 export function StoriesPage() {
   return (
-    <PageFrame>
+    <>
       <section className="px-5 py-10 md:py-16">
         <div className="mx-auto max-w-7xl">
           <section className="rounded-[2.5rem] bg-stone-100 p-7 md:p-12">
@@ -297,6 +335,6 @@ export function StoriesPage() {
           </section>
         </div>
       </section>
-    </PageFrame>
+    </>
   );
 }

@@ -1,6 +1,7 @@
 // @ts-nocheck
 "use client";
 
+import Link from "next/link";
 import React, { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import {
@@ -20,8 +21,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CustomizeIcon } from "@/components/ui/customize-icon";
 import { SectionHeader } from "@/components/ui/headers";
 import { TooltipIconButton } from "@/components/ui/tooltip-icon-button";
-import { SiteFooter } from "@/components/layout/site-footer";
-import { SiteNav } from "@/components/layout/site-nav";
 
 const stories = [
   {
@@ -83,10 +82,7 @@ export default function GetWholeProjectPrototype() {
   );
 
   return (
-    <div id="top" className="min-h-screen bg-[radial-gradient(circle_at_top_left,#f8f3ed,transparent_34%),linear-gradient(180deg,#fffaf4_0%,#ffffff_42%,#f7f7f5_100%)] text-stone-950">
-      <SiteNav />
-
-      <main>
+    <>
         <section className="relative overflow-hidden px-5 py-16 md:py-24">
           <div className="mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[1.05fr_0.95fr]">
             <motion.div initial={{ opacity: 0, y: 18 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.55 }}>
@@ -104,12 +100,12 @@ export default function GetWholeProjectPrototype() {
               </p>
               <p className="mt-5 max-w-2xl text-lg font-medium text-stone-800">You are not your disorder. Your whole life is still yours.</p>
               <div className="mt-9 flex flex-col gap-4 sm:flex-row">
-                <a href="/find-help" className="inline-flex h-12 items-center justify-center rounded-full bg-stone-950 px-7 text-base font-medium text-white transition hover:bg-stone-800">
+                <Link href="/find-help" className="inline-flex h-12 items-center justify-center rounded-full bg-stone-950 px-7 text-base font-medium text-white transition hover:bg-stone-800">
                   Get urgent help <LifeBuoy className="ml-2 h-5 w-5" />
-                </a>
-                <a href="/find-support" className="inline-flex h-12 items-center justify-center rounded-full border border-stone-300 bg-white px-7 text-base font-medium text-stone-950 transition hover:bg-stone-50">
+                </Link>
+                <Link href="/find-support" className="inline-flex h-12 items-center justify-center rounded-full border border-stone-300 bg-white px-7 text-base font-medium text-stone-950 transition hover:bg-stone-50">
                   Explore private tools <ArrowRight className="ml-2 h-5 w-5" />
-                </a>
+                </Link>
               </div>
             </motion.div>
 
@@ -298,9 +294,6 @@ export default function GetWholeProjectPrototype() {
         </section>
         <div id="stories" />
 
-      </main>
-
-      <SiteFooter />
-    </div>
+    </>
   );
 }

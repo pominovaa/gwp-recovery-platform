@@ -1,8 +1,8 @@
 // @ts-nocheck
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { Heart, LifeBuoy, Menu, X } from "lucide-react";
 import { AuthDialog } from "@/components/auth/auth-dialog";
 import { CustomizeIcon } from "@/components/ui/customize-icon";
@@ -144,7 +144,7 @@ export function SiteNav() {
     <>
       <header className="sticky top-0 z-50 border-b border-stone-200/80 bg-white/85 backdrop-blur-xl">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
-          <Link href="/" className="flex items-center gap-3">
+          <Link href="/" className="flex items-center gap-3" onClick={() => setOpen(false)}>
             <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-stone-900 text-white shadow-sm">
               <Heart className="h-5 w-5" />
             </div>
