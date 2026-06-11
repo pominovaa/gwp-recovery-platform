@@ -25,6 +25,15 @@ describe("find support components", () => {
     expect(html).toContain("Gift subscription");
   });
 
+  it("keeps gift subscription buttons visible on white pricing cards", () => {
+    const html = renderToStaticMarkup(<PricingCard tier={tiers[2]} />);
+
+    expect(html).toContain("Gift subscription");
+    expect(html).toContain("border-stone-400");
+    expect(html).toContain("text-stone-950");
+    expect(html).toContain("hover:border-stone-500");
+  });
+
   it("uses the shared card radius for pricing cards", () => {
     const html = renderToStaticMarkup(<PricingCard tier={tiers[1]} />);
 

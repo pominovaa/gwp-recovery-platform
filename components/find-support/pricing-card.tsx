@@ -54,10 +54,11 @@ export function PricingCard({ tier }: PricingCardProps) {
               <CheckoutButton
                 gift
                 planId={tier.planId}
+                variant={tier.featured ? "default" : "outline"}
                 className={`h-10 rounded-full border ${
                   tier.featured
                     ? "border-white/25 bg-stone-900 text-white hover:bg-stone-800"
-                    : "border-stone-200 bg-white text-stone-950 hover:bg-stone-50"
+                    : "border-stone-400 bg-white text-stone-950 shadow-sm hover:border-stone-500 hover:bg-stone-50"
                 }`}
               >
                 <span className="inline-flex min-w-0 flex-wrap items-center justify-center gap-2">
