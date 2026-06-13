@@ -96,6 +96,8 @@ def run(command: list[str], stdin: str | None = None) -> subprocess.CompletedPro
         input=stdin,
         capture_output=True,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         check=False,
     )
 
@@ -359,9 +361,10 @@ def annotate_handled(payload: dict[str, Any], handled_ids: set[str]) -> dict[str
         thread["handled"] = thread["id"] in handled_ids
         thread_comments = thread.get("comments", {}).get("nodes") or []
         thread_has_unhandled_comment = False
+        thread_is_context_only = bool(thread.get("isResolved") or thread.get("isOutdated"))
         for comment in thread_comments:
             comment["handled"] = comment["id"] in handled_ids
-            if not comment["handled"]:
+            if not comment["handled"] and not thread_is_context_only:
                 thread_has_unhandled_comment = True
                 unhandled.append(
                     {
