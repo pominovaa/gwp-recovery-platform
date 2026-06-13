@@ -143,6 +143,18 @@ project-scoped agents committed under:
 .codex/agents/
 ```
 
+Windows PowerShell path:
+
+```text
+.\.codex\agents\
+```
+
+To list the project agents in Windows PowerShell:
+
+```powershell
+Get-ChildItem .\.codex\agents\
+```
+
 If the repository is not trusted, Codex may not load the planning, development,
 and validation agents. The workflow can then degrade into a single-session run,
 which is not the intended team workflow.
