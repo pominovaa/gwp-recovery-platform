@@ -4,6 +4,6 @@ out
 .env
 .env.local
 *.log
-coverage
 tsconfig.tsbuildinfo
+coverage
 local-specs/
