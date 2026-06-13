@@ -142,12 +142,26 @@ Windows PowerShell alternative:
 py -3 .\plugins\gwp-linear-workflow\scripts\gwp_doctor.py
 ```
 
-Do not continue until the doctor reports that the repository, Linear MCP,
-GitHub CLI, npm scripts, and project agents are ready.
+The doctor runs commands natively on Windows, so it uses the same PowerShell
+`PATH` entries for `codex`, `gh`, Git, and npm. It verifies that the workflow
+plugin is installed and enabled, confirms structured Linear OAuth state, and
+performs a read-only fetch of `GWP-26`. To use another existing issue:
+
+```powershell
+py -3 .\plugins\gwp-linear-workflow\scripts\gwp_doctor.py --linear-probe-issue GWP-XX
+```
+
+Do not continue until the doctor reports that the plugin, repository, Linear
+MCP authentication and issue probe, GitHub CLI, npm scripts, verification
+commands, and project agents are ready.
 
 If the doctor reports a failure, fix that item first. Common examples are
 missing GitHub access, missing Linear authentication, missing npm scripts, or an
-untrusted project.
+untrusted project. If it reports `linear is not authenticated`, run:
+
+```bash
+codex mcp login linear
+```
 
 ## 7. Start a Linear issue workflow
 

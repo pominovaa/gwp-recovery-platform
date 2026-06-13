@@ -8,7 +8,7 @@ function createSupabaseAdminClient() {
     throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SECRET_KEY");
   }
 
-  return createClient<any>(supabaseUrl, supabaseSecretKey, {
+  return createClient(supabaseUrl, supabaseSecretKey, {
     auth: {
       autoRefreshToken: false,
       persistSession: false,

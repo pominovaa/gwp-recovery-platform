@@ -8,7 +8,7 @@ function createSupabaseBrowserClient() {
     throw new Error("Missing NEXT_PUBLIC_SUPABASE_URL or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY");
   }
 
-  return createClient<any>(supabaseUrl, supabasePublishableKey);
+  return createClient(supabaseUrl, supabasePublishableKey);
 }
 
 type SupabaseBrowserClient = ReturnType<typeof createSupabaseBrowserClient>;

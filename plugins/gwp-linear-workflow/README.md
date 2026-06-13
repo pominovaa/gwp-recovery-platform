@@ -47,6 +47,12 @@ gh auth status
 python3 plugins/gwp-linear-workflow/scripts/gwp_doctor.py
 ```
 
+The doctor checks that the plugin is installed and enabled, verifies structured
+Linear OAuth state, performs a read-only fetch of `GWP-26`, checks GitHub CLI
+authentication, validates project agents, and runs the required npm commands.
+Use `--linear-probe-issue GWP-XX` when a different existing issue should be used
+for the Linear probe.
+
 The plugin bundles its own GWP-specific Linear operations skill
 (`gwp-linear-ops`), so developers do not need to separately install the
 standalone Linear skill. Each developer still needs personal Linear OAuth.

@@ -20,12 +20,30 @@ the installed plugin root.
 The doctor is read-only with respect to source files and Linear. It must not
 change Linear status, create branches, edit files, commit, push, or create PRs.
 
-The helper runs the full required verification gate (`npm test`, `npm run lint`,
-`npm run typecheck`, and `npm run build`), so expect it to take about as long as
-a normal pre-PR verification run.
+The helper verifies that the workflow plugin is installed and enabled, checks
+structured Linear MCP authentication state, and performs a read-only fetch of
+`GWP-26` through Linear MCP. Pass `--linear-probe-issue GWP-XX` to use another
+existing issue for that probe.
+
+Commands run natively on Windows so PowerShell-visible `codex`, `gh`, Git, and
+npm executables remain available. On Unix, commands also run natively, with an
+nvm login-shell fallback only when npm is not already on `PATH`.
+
+The helper also runs the full required verification gate (`npm test`, `npm run
+lint`, `npm run typecheck`, and `npm run build`), so expect it to take about as
+long as a normal pre-PR verification run.
 
 Treat failures as blockers for work mode unless the workflow spec explicitly
 allows developer-approved risk.
+
+If Linear reports `not_logged_in`, run:
+
+```bash
+codex mcp login linear
+```
+
+The doctor must report `PASS` for both Linear authentication and the read-only
+issue probe before the environment is considered ready.
 
 ## GitHub CLI sandbox note
 

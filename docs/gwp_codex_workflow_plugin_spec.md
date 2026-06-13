@@ -1322,13 +1322,22 @@ not depend on tribal knowledge.
 To reduce support load, ship a lightweight `gwp-doctor` skill that checks the
 developer's environment and prints a clear pass/fail report. It should verify:
 
-1. The current repository remote is `olena-ageyeva/gwp-recovery-platform`.
-2. Linear MCP is configured and authenticated.
-3. GitHub PR creation is available (`gh auth status` or an equivalent connector).
-4. `npm run lint`, `npm run typecheck`, and `npm run build` scripts exist and run
+1. The `gwp-linear-workflow` plugin is installed and enabled.
+2. The current repository remote is `olena-ageyeva/gwp-recovery-platform`.
+3. Linear MCP is enabled and its structured auth state is `oauth` or
+   `bearer_token`, not merely configured.
+4. A bounded read-only Linear MCP fetch succeeds for an existing issue such as
+   `GWP-26`; `--linear-probe-issue GWP-XX` may select another issue.
+5. GitHub PR creation is available (`gh auth status` or an equivalent connector).
+6. `npm run lint`, `npm run typecheck`, and `npm run build` scripts exist and run
    (catching the Next.js 16 lint-migration prerequisite early).
-5. The `.codex/agents/*.toml` custom agents are present and loadable, and the
+7. The `.codex/agents/*.toml` custom agents are present and loadable, and the
    project is trusted so those agents actually load.
+
+The doctor must execute commands natively on Windows. It may use a POSIX
+login-shell fallback only when running on Unix and npm is unavailable on
+`PATH` but an nvm initialization script exists. It must report
+`codex mcp login linear` when Linear is explicitly unauthenticated.
 
 `gwp-doctor` is read-only and must never change Linear status, create branches,
 or edit files.

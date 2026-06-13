@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import shlex
+import shutil
 import subprocess
 from pathlib import Path
+from typing import Any
 
 try:
     import tomllib
@@ -18,6 +21,8 @@ else:
 
 ROOT = Path.cwd()
 EXPECTED_REMOTE = "github.com/olena-ageyeva/gwp-recovery-platform"
+PLUGIN_NAME = "gwp-linear-workflow"
+DEFAULT_LINEAR_PROBE_ISSUE = "GWP-26"
 REQUIRED_SCRIPTS = ["test", "lint", "typecheck", "build"]
 REQUIRED_COMMANDS = [
     ["npm", "test"],
@@ -33,21 +38,32 @@ REQUIRED_AGENTS = {
 }
 
 
+def resolved_command(command: list[str]) -> list[str]:
+    executable = shutil.which(command[0])
+    if executable:
+        return [executable, *command[1:]]
+
+    if os.name != "nt" and command[0] == "npm":
+        nvm_script = Path.home() / ".nvm" / "nvm.sh"
+        if nvm_script.is_file():
+            command_text = f'. "{nvm_script}"; {shlex.join(command)}'
+            return ["bash", "-lc", command_text]
+
+    raise FileNotFoundError(f"{command[0]} was not found on PATH")
+
+
 def run(command: list[str], timeout: int = 600) -> subprocess.CompletedProcess[str]:
-    # Match an interactive shell closely enough that Codex and gh find the same auth/config.
-    command_text = (
-        'if ! command -v npm >/dev/null 2>&1 && [ -s "$HOME/.nvm/nvm.sh" ]; '
-        'then . "$HOME/.nvm/nvm.sh"; fi; '
-        + shlex.join(command)
-    )
-    return subprocess.run(
-        ["bash", "-lc", command_text],
-        cwd=ROOT,
-        text=True,
-        capture_output=True,
-        check=False,
-        timeout=timeout,
-    )
+    try:
+        return subprocess.run(
+            resolved_command(command),
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+            timeout=timeout,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired) as error:
+        return subprocess.CompletedProcess(command, 127, "", str(error))
 
 
 def ok(label: str, detail: str = "") -> tuple[bool, str, str]:
@@ -71,16 +87,140 @@ def check_remote() -> tuple[bool, str, str]:
     return fail("git remote", remote or compact_output(result))
 
 
-def check_linear_mcp() -> tuple[bool, str, str]:
-    result = run(["codex", "mcp", "list"])
-    output = result.stdout + result.stderr
-    has_linear = "linear" in output and "enabled" in output
-    has_oauth = "OAuth" in output
-    if result.returncode == 0 and has_linear and has_oauth:
-        return ok("Linear MCP", "linear enabled with OAuth")
-    if result.returncode == 0 and has_linear:
-        return fail("Linear MCP", "linear is enabled, but OAuth auth was not confirmed")
-    return fail("Linear MCP", compact_output(result))
+def parse_json_output(result: subprocess.CompletedProcess[str], label: str) -> Any:
+    if result.returncode != 0:
+        raise RuntimeError(compact_output(result))
+    try:
+        return json.loads(result.stdout)
+    except json.JSONDecodeError as error:
+        raise RuntimeError(f"{label} returned invalid JSON: {error}") from error
+
+
+def check_plugin() -> tuple[bool, str, str]:
+    result = run(["codex", "plugin", "list", "--json"])
+    try:
+        payload = parse_json_output(result, "codex plugin list")
+    except RuntimeError as error:
+        return fail("workflow plugin", str(error))
+
+    installed = payload.get("installed", []) if isinstance(payload, dict) else []
+    for plugin in installed:
+        if isinstance(plugin, str):
+            name = plugin
+            enabled = True
+        elif isinstance(plugin, dict):
+            name = plugin.get("name") or plugin.get("id") or plugin.get("plugin")
+            enabled = plugin.get("enabled", True)
+        else:
+            continue
+        if name == PLUGIN_NAME:
+            if enabled:
+                return ok("workflow plugin", f"{PLUGIN_NAME} installed and enabled")
+            return fail(
+                "workflow plugin",
+                f"{PLUGIN_NAME} is installed but disabled; enable or reinstall the plugin",
+            )
+
+    return fail(
+        "workflow plugin",
+        f"{PLUGIN_NAME} is not installed; run "
+        "`codex plugin add gwp-linear-workflow@gwp-recovery-platform`",
+    )
+
+
+def linear_probe_succeeded(output: str, issue_id: str) -> bool:
+    marker = f"GWP_LINEAR_PROBE_OK:{issue_id}"
+    saw_linear_tool_call = False
+    saw_marker = False
+
+    for line in output.splitlines():
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        item = event.get("item", {}) if isinstance(event, dict) else {}
+        if (
+            isinstance(item, dict)
+            and item.get("type") == "mcp_tool_call"
+            and "linear" in json.dumps(item).lower()
+            and item.get("status") in {None, "completed"}
+        ):
+            saw_linear_tool_call = True
+        if (
+            isinstance(item, dict)
+            and item.get("type") == "agent_message"
+            and str(item.get("text", "")).strip() == marker
+        ):
+            saw_marker = True
+
+    return saw_linear_tool_call and saw_marker
+
+
+def check_linear_mcp(issue_id: str) -> tuple[bool, str, str]:
+    result = run(["codex", "mcp", "list", "--json"])
+    try:
+        servers = parse_json_output(result, "codex mcp list")
+    except RuntimeError as error:
+        return fail("Linear MCP", str(error))
+
+    linear = next(
+        (
+            server
+            for server in servers
+            if isinstance(server, dict) and server.get("name", "").lower() == "linear"
+        ),
+        None,
+    )
+    if linear is None:
+        return fail(
+            "Linear MCP",
+            "linear is not configured; reinstall the workflow plugin and restart Codex",
+        )
+    if not linear.get("enabled", False):
+        return fail("Linear MCP", "linear is configured but disabled")
+
+    auth_status = str(linear.get("auth_status", "")).lower()
+    if auth_status == "not_logged_in":
+        return fail("Linear MCP", "linear is not authenticated; run `codex mcp login linear`")
+    if auth_status not in {"oauth", "bearer_token"}:
+        return fail(
+            "Linear MCP",
+            f"linear authentication is {auth_status or 'unknown'}; "
+            "run `codex mcp login linear` and retry",
+        )
+
+    marker = f"GWP_LINEAR_PROBE_OK:{issue_id}"
+    prompt = (
+        f"Use only the configured Linear MCP server to fetch issue {issue_id}. "
+        "Do not use shell commands, web search, or edit files. "
+        f"If the read succeeds and the returned identifier is exactly {issue_id}, "
+        f"reply with exactly {marker}. Otherwise explain the Linear read failure."
+    )
+    probe = run(
+        [
+            "codex",
+            "exec",
+            "--ephemeral",
+            "--sandbox",
+            "read-only",
+            "--json",
+            prompt,
+        ],
+        timeout=180,
+    )
+    if probe.returncode != 0:
+        return fail(
+            "Linear MCP",
+            "authenticated configuration was found, but the read-only issue probe failed:\n"
+            + compact_output(probe),
+        )
+    if not linear_probe_succeeded(probe.stdout, issue_id):
+        return fail(
+            "Linear MCP",
+            f"the read-only fetch for {issue_id} did not complete through Linear MCP",
+        )
+
+    return ok("Linear MCP", f"OAuth authenticated; read-only fetch for {issue_id} passed")
 
 
 def check_gh_auth() -> tuple[bool, str, str]:
@@ -177,10 +317,22 @@ def check_agents() -> tuple[bool, str, str]:
     )
 
 
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Check GWP workflow readiness.")
+    parser.add_argument(
+        "--linear-probe-issue",
+        default=DEFAULT_LINEAR_PROBE_ISSUE,
+        help="Existing Linear issue ID used for the read-only MCP readiness probe.",
+    )
+    return parser.parse_args()
+
+
 def main() -> int:
+    args = parse_args()
     checks = [
         check_remote(),
-        check_linear_mcp(),
+        check_plugin(),
+        check_linear_mcp(args.linear_probe_issue),
         check_gh_auth(),
         check_package_scripts(),
         check_verification_commands(),
