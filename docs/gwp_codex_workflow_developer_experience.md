@@ -34,8 +34,9 @@ installed and enabled, confirms structured Linear OAuth state, and performs a
 read-only Linear issue fetch before reporting ready.
 
 The custom planning, development, validation, and reviewer agents are committed
-to the repository under `.codex/agents/*.toml`. Developers do not create those
-agents locally; trusting the project lets Codex load them.
+to the repository under `.codex/agents/*.toml`. In Windows PowerShell, the same
+path is `.\.codex\agents\*.toml`. Developers do not create those agents locally;
+trusting the project lets Codex load them.
 
 ## Starting an issue
 
@@ -66,6 +67,15 @@ From there:
    npm run lint
    npm run typecheck
    npm run build
+   ```
+
+   Windows PowerShell:
+
+   ```powershell
+   npm.cmd test
+   npm.cmd run lint
+   npm.cmd run typecheck
+   npm.cmd run build
    ```
 
 5. **Validate.** Codex commits the verified work with the Linear issue ID, then
