@@ -29,6 +29,10 @@ Manager. If `gh auth status` passes in PowerShell or Git Bash but fails inside a
 restricted Codex command sandbox, treat that as the same sandbox/keyring false
 negative described in the workflow spec.
 
+The doctor runs commands natively on Windows, verifies that the plugin is
+installed and enabled, confirms structured Linear OAuth state, and performs a
+read-only Linear issue fetch before reporting ready.
+
 The custom planning, development, validation, and reviewer agents are committed
 to the repository under `.codex/agents/*.toml`. Developers do not create those
 agents locally; trusting the project lets Codex load them.
@@ -44,16 +48,18 @@ gwp-linear-to-pr Work on Linear issue GWP-XX
 From there:
 
 1. **Claim.** Codex confirms the repo remote, fetches the Linear issue, checks
-   Linear and GitHub auth, resolves Linear workflow states, moves the issue to
-   `In Progress`, and creates a branch containing the issue ID.
+   Linear and GitHub auth, assigns the issue to the current developer, resolves
+   Linear workflow states, verifies the `In Progress` write by re-fetching the
+   issue, and creates the branch from Linear `gitBranchName` when available.
 2. **Plan.** The read-only Planning Agent produces an implementation plan,
    acceptance criteria, test plan, risks, and open questions. The root Codex
    session shows that plan to the developer.
 3. **Approve.** The developer replies with `Approved` only after the plan is
    correct. Codex then posts the approved plan and criteria as a Linear
    checkpoint comment.
-4. **Build.** The Development Agent implements only the approved plan, updates
-   tests for behavior changes, and runs:
+4. **Build.** The Development Agent reads related code and tests, implements
+   only the approved plan, updates tests for behavior changes, runs targeted
+   tests first, and then runs:
 
    ```bash
    npm test
@@ -67,9 +73,11 @@ From there:
    criteria, test quality, security-sensitive areas, and required command
    results.
 6. **Open PR.** Only after validation passes, Codex pushes the branch, opens a
-   GitHub PR, moves the Linear issue to `In Review`, and posts a PR-created
-   checkpoint to Linear. Any workflow path that changes code commits the changes
-   and pushes the issue branch to GitHub before it reports completion.
+   GitHub PR titled from the exact Linear identifier and title, moves the issue
+   to `In Review`, verifies the status by re-fetching it, and posts a PR-created
+   checkpoint containing the confirmed status. Any workflow path that changes
+   code commits the changes and pushes the issue branch to GitHub before it
+   reports completion.
 
 ## After the PR
 
@@ -81,6 +89,7 @@ Codex reads:
 1. Top-level PR comments.
 2. Review submissions.
 3. Inline review threads and review-thread comments.
+4. Review decision, mergeability, and CI/check status.
 
 All new comments are triaged, including bot or agent comments. Informational
 comments that need no code change get a direct GitHub reply explaining why no
@@ -101,8 +110,10 @@ gwp-linear-to-pr review PR for GWP-XX
 ```
 
 This outbound review path is separate from `review PR comments`. Codex resolves
-the PR from the Linear issue, fetches PR metadata and diff context, runs the
-read-only Reviewer Agent, then posts one structured top-level PR comment. It does
+the PR from the Linear issue, fetches PR metadata, CI state, existing comments,
+and diff context, reads changed files and surrounding tests, then runs the
+read-only Reviewer Agent. It creates one canonical `AI-generated review note`
+comment or updates the authenticated user's existing canonical comment. It does
 not edit files, change Linear status, post inline comments, approve the PR, or
 submit an official GitHub review event.
 
@@ -159,6 +170,9 @@ The workflow fails safe:
   PR update.
 - **PR creation or update fails:** Codex reports branch, commit, verification,
   validation, and the exact GitHub error.
+- **Linear write verification fails:** Codex retries once, then reports partial
+  success with the intended and actual assignee/status instead of claiming the
+  workflow completed.
 
 ## Boundaries
 

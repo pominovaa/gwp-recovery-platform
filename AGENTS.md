@@ -15,14 +15,19 @@ not a replacement for the workflow spec.
 
 When working on a Linear issue:
 
-1. Use the Linear issue ID in the branch name.
-2. Use the Linear issue ID in commit messages.
-3. Use the Linear issue ID in the PR title.
-4. Do not commit directly to `main`.
-5. Keep changes focused on the active Linear issue.
-6. Do not broaden scope without approval.
-7. Add or update tests for behavior changes.
-8. Before PR creation, run:
+1. Assign the issue to the current developer and verify the assignment.
+2. Verify every Linear status write by re-fetching the issue; retry once and
+   report partial success if the readback still differs.
+3. Prefer Linear `gitBranchName`; otherwise use a branch containing the issue ID.
+4. Use the Linear issue ID in commit messages.
+5. Use `<ISSUE-ID>: <exact Linear title>` for the PR title.
+6. Do not commit directly to `main`.
+7. Read related code and tests before editing.
+8. Keep changes focused on the active Linear issue.
+9. Do not broaden scope without approval.
+10. Add or update tests for behavior changes.
+11. Run targeted tests before the full verification gate.
+12. Before PR creation, run:
 
 ```bash
 npm test
@@ -31,8 +36,10 @@ npm run typecheck
 npm run build
 ```
 
-9. Do not create a PR unless tests, lint, typecheck, and build pass.
-10. Do not create a PR unless internal validation passes.
+13. Do not create a PR unless tests, lint, typecheck, and build pass.
+14. Do not create a PR unless internal validation passes.
+15. For defects, include root cause, prevention notes, and regression coverage.
+16. For frontend changes, record bounded visual validation or a skip reason.
 11. For any workflow path that changes repository files, commit the changes and
     push the issue branch to GitHub before reporting completion.
 
@@ -55,8 +62,8 @@ Canceled
 Duplicate
 ```
 
-`Done` means the PR was merged. Codex must not move an issue to `Done` before
-merge.
+`Done` means the PR was merged. Codex must not move an issue to `Done`; the
+native Linear GitHub integration or a human owns that post-merge transition.
 
 ## Security
 
@@ -105,10 +112,14 @@ Linear issue: GWP-XX
 ## Summary
 - ...
 
+## Root Cause / Prevention
+- N/A for non-defect work.
+
 ## Acceptance Criteria
 - [x] ...
 
 ## Verification
+- [x] Targeted tests: `...`
 - [x] npm test
 - [x] npm run lint
 - [x] npm run typecheck

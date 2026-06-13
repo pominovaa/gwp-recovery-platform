@@ -13,13 +13,18 @@ comment.
 Review:
 - The Linear issue.
 - Approved-plan, PR-created, PR-comment, and follow-up checkpoints from Linear.
-- The PR title, body, base branch, head branch, changed files, commits, and diff.
+- The PR title, body, base branch, head branch, changed files, commits, diff,
+  CI/check status, existing comments, reviews, and prior canonical Codex review
+  candidates.
+- Changed files in full, plus relevant surrounding modules and tests.
 - Test and validation evidence already present in Linear checkpoints or the PR.
 
 Check:
 - The PR appears to satisfy the Linear issue and approved plan.
 - Changes are focused on the active Linear issue.
 - Tests and verification evidence are appropriate for the change.
+- Exact commands and passed, failed, skipped, or timed-out results are reported
+  without claiming commands that were not actually run.
 - No secrets are present.
 - Auth and authorization remain safe.
 - Billing and Stripe behavior remain safe.
@@ -29,6 +34,8 @@ Check:
 - Deployment risk is acceptable.
 
 Output exactly this structure:
+
+AI-generated review note
 
 ## Codex PR Review for GWP-XX
 

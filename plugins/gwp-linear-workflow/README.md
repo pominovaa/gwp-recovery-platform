@@ -66,11 +66,12 @@ gwp-linear-to-pr Work on Linear issue GWP-XX
 ```
 
 The workflow fetches the issue, runs preflight, moves the issue to In Progress,
-creates an issue branch, produces a read-only plan, waits for developer
-approval, implements with tests, validates the committed diff, opens a GitHub PR,
-moves the issue to In Review, and stops cleanly. Any workflow path that changes
-code commits the changes and pushes the issue branch to GitHub before it reports
-completion.
+verifies the Linear write, assigns the issue to the current developer, prefers
+Linear `gitBranchName`, produces a read-only plan, waits for developer approval,
+implements with targeted and full verification, validates the committed diff,
+opens a GitHub PR, verifies the move to In Review, and stops cleanly. Any
+workflow path that changes code commits the changes and pushes the issue branch
+to GitHub before it reports completion.
 
 After PR creation, run a manual PR comment check when you want Codex to inspect
 new feedback.
@@ -99,7 +100,8 @@ and waits for approval before editing, committing, pushing, or updating the PR.
 When no code update is needed, Codex replies to the original GitHub comment with
 the reason and records the handled feedback in Linear.
 
-To have Codex review the PR itself and post one structured top-level PR comment,
+To have Codex review the PR itself and create or update one structured top-level
+PR comment,
 ask:
 
 ```text
@@ -107,7 +109,9 @@ gwp-linear-to-pr review PR for GWP-XX
 ```
 
 This is separate from `review PR comments`: it does not triage incoming feedback
-or edit code, and it does not submit an official GitHub review event.
+or edit code, and it does not submit an official GitHub review event. Re-running
+outbound review updates the authenticated user's existing canonical Codex review
+comment instead of posting a duplicate.
 
 Linear reads, comments, and status transitions are handled by the plugin-local
 `gwp-linear-ops` skill over the bundled Linear MCP server.
@@ -116,7 +120,8 @@ Linear reads, comments, and status transitions are handled by the plugin-local
 
 - Do not use Codex cloud agents for this workflow.
 - Do not assign Linear issues to `@Codex` as the trigger.
-- Do not move Linear issues to Done before the linked PR is merged.
+- Do not move Linear issues to Done; the native integration or a human owns the
+  post-merge transition.
 - Do not create a PR unless tests, lint, typecheck, build, and internal
   validation all pass.
 - Do not apply PR-review feedback without developer approval of a follow-up plan.

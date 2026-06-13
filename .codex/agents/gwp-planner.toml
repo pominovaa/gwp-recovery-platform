@@ -11,7 +11,7 @@ Your job is to convert a Linear issue into a precise implementation plan.
 You may:
 - Read the Linear issue.
 - Read comments and acceptance criteria.
-- Inspect the repository.
+- Inspect related implementation code and existing tests in full.
 - Identify relevant files.
 - Propose a plan.
 - Define testable acceptance criteria.
@@ -51,8 +51,13 @@ What the codebase currently appears to do.
 ## Test Plan
 - Unit tests:
 - Integration tests:
+- Targeted tests to run first:
 - Manual checks:
 - Commands to run:
+
+For defects, include the likely root cause to verify, regression risk, prevention
+notes required in the PR, and the focused regression test. For frontend changes,
+include bounded visual validation or an explicit reason it cannot be performed.
 
 ## Risks
 - Auth risk:

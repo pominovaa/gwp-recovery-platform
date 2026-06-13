@@ -178,9 +178,15 @@ The workflow should:
 1. Confirm it is running in the GWP Recovery Platform repository.
 2. Fetch the Linear issue.
 3. Run preflight checks.
-4. Move the Linear issue from `Todo` to `In Progress`.
-5. Create a branch whose name includes the Linear issue ID.
-6. Produce an implementation plan and acceptance criteria.
+4. Assign the issue to the current developer and verify the assignment by
+   re-fetching the issue.
+5. Move the Linear issue from `Todo` to `In Progress` and verify the returned
+   status by re-fetching it.
+6. Confirm the exact issue identifier and title.
+7. Create the branch from Linear `gitBranchName` when present; otherwise use the
+   documented owner/issue/title fallback.
+8. Produce an implementation plan and acceptance criteria after reading related
+   code and tests.
 
 To resume interrupted work, enter:
 
@@ -230,7 +236,8 @@ explicitly intended.
 After approval, Codex implements only the approved plan. It must keep the diff
 focused on the active Linear issue and add or update tests for behavior changes.
 
-Before PR creation, Codex must run and pass:
+Codex first runs targeted tests for the changed behavior. Before PR creation, it
+must then run and pass:
 
 ```bash
 npm test
@@ -247,6 +254,10 @@ npm run typecheck
 ```bash
 npm run build
 ```
+
+For defects, the PR must include root-cause and prevention notes plus focused
+regression coverage. For frontend changes, Codex performs a bounded visual check
+when practical and records either the result or the exact reason it was skipped.
 
 The commit message must include the Linear issue ID.
 
@@ -306,7 +317,10 @@ Linear issue: GWP-XX
 - ...
 ```
 
-After PR creation, Codex moves the Linear issue to `In Review`.
+After PR creation, Codex moves the Linear issue to `In Review`, immediately
+re-fetches it, and retries the write once if the returned status does not match.
+If the second readback still differs, Codex reports the PR as partial success
+with the intended and actual statuses instead of claiming completion.
 
 Codex must not move a Linear issue to `Done`. `Done` means the PR was merged.
 
@@ -326,8 +340,10 @@ check if an open PR exists:
 gwp-linear-to-pr resume workflow for GWP-XX
 ```
 
-Codex checks top-level PR comments, review submissions, and inline review
-threads. It triages all new comments, including bot/agent comments.
+Codex checks top-level PR comments, review submissions, inline review threads,
+review decision, mergeability, and CI/check status. It triages all new comments,
+including bot/agent comments, and does not describe a PR as ready while checks
+are pending or failing.
 
 If no code update is needed for a comment, Codex replies to the original GitHub
 comment explaining why no change is needed and records the handled ID in Linear.
@@ -369,9 +385,16 @@ gwp-linear-to-pr review PR for GWP-XX
 ```
 
 Codex resolves the PR from the Linear issue, fetches PR metadata, changed files,
-commits, and diff context, then runs the read-only Reviewer Agent. It posts one
-top-level PR comment with findings, test and validation notes, risk notes, and
-follow-ups.
+commits, diff and CI context, existing comments/reviews, and prior canonical
+review candidates. It reads changed files in full with relevant surrounding
+modules and tests, then runs the read-only Reviewer Agent.
+
+The comment begins with `AI-generated review note` followed by
+`## Codex PR Review for GWP-XX`. The first run creates one top-level comment; a
+later run by the same GitHub user updates that canonical comment. If multiple
+canonical candidates exist, Codex stops and reports the duplicates instead of
+posting another. It never edits another user's comment or deletes comments
+without explicit approval.
 
 This is not the same as `review PR comments`. It does not triage existing
 reviewer feedback, edit files, change Linear status, post inline comments,

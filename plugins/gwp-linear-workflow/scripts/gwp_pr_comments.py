@@ -178,6 +178,72 @@ def resolve_pr_by_issue(repo: str, issue_id: str) -> int:
     return int(candidates[0]["number"])
 
 
+def summarize_status_checks(checks: list[dict[str, Any]]) -> dict[str, Any]:
+    passed: list[str] = []
+    pending: list[str] = []
+    failing: list[str] = []
+
+    for check in checks:
+        name = check.get("name") or check.get("context") or "unnamed check"
+        typename = check.get("__typename")
+        if typename == "CheckRun":
+            status = str(check.get("status") or "").upper()
+            conclusion = str(check.get("conclusion") or "").upper()
+            if status != "COMPLETED":
+                pending.append(name)
+            elif conclusion in {"SUCCESS", "NEUTRAL", "SKIPPED"}:
+                passed.append(name)
+            else:
+                failing.append(name)
+        else:
+            state = str(check.get("state") or "").upper()
+            if state == "SUCCESS":
+                passed.append(name)
+            elif state in {"EXPECTED", "PENDING"}:
+                pending.append(name)
+            else:
+                failing.append(name)
+
+    return {
+        "state": (
+            "failing"
+            if failing
+            else "pending"
+            if pending
+            else "passing"
+            if passed
+            else "none"
+        ),
+        "passed": passed,
+        "pending": pending,
+        "failing": failing,
+        "total": len(checks),
+    }
+
+
+def fetch_pr_status(repo: str, number: int) -> dict[str, Any]:
+    payload = run_json(
+        [
+            "gh",
+            "pr",
+            "view",
+            str(number),
+            "--repo",
+            repo,
+            "--json",
+            "reviewDecision,mergeable,mergeStateStatus,statusCheckRollup",
+        ]
+    )
+    checks = payload.get("statusCheckRollup") or []
+    return {
+        "reviewDecision": payload.get("reviewDecision"),
+        "mergeable": payload.get("mergeable"),
+        "mergeStateStatus": payload.get("mergeStateStatus"),
+        "statusChecks": checks,
+        "statusCheckSummary": summarize_status_checks(checks),
+    }
+
+
 def fetch_page(
     owner: str,
     repo: str,
@@ -267,6 +333,7 @@ def fetch_all(repo: str, number: int) -> dict[str, Any]:
             break
 
     assert pr_meta is not None
+    pr_meta.update(fetch_pr_status(repo, number))
     return {
         "pull_request": pr_meta,
         "conversation_comments": conversation_comments,

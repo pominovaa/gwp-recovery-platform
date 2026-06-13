@@ -252,10 +252,21 @@ Before moving an issue, Codex must:
    team state ID, matching case-insensitively and tolerating minor label
    differences (for example `In Progress` vs `In progress`).
 4. Update the issue to that resolved state ID.
+5. Re-fetch the issue immediately and confirm that the actual status matches the
+   target.
+6. Retry the write once when the first readback is stale or incorrect, then
+   re-fetch and compare again.
 
 If the target state cannot be resolved unambiguously for the issue's team, Codex
 must stop and report the available states instead of guessing. Codex must never
 hardcode a state ID or assume a label string is identical across teams.
+
+Before branch or code work, Codex must also assign the issue to `me`, re-fetch
+the issue, and confirm that the actual assignee is the current Linear user. The
+same one-retry readback rule applies. If assignment or status verification still
+fails, Codex must stop with a partial-success summary containing the intended
+value, actual value, any PR URL already created, and the exact unblock step.
+Codex must never claim success from a Linear write response alone.
 
 ### Todo → In Progress
 
@@ -287,9 +298,9 @@ Codex may move the issue from `In Progress` to `In Review` only after:
 
 `Done` means the PR was merged.
 
-This transition should preferably be handled by the native Linear GitHub integration after PR merge.
-
-Codex must not move an issue to `Done` before the PR is merged.
+This transition is handled by the native Linear GitHub integration or a human
+after PR merge. Codex must not write `Done`; it may only re-fetch and report the
+actual post-merge status.
 
 ## Recommended Linear GitHub integration configuration
 
@@ -317,9 +328,14 @@ observed for the upstream repository configuration.
 
 ## Branch naming convention
 
-Every Codex-created branch must include the Linear issue ID.
+Every Codex-created branch must include the Linear issue ID. Before naming the
+branch, Codex confirms the exact issue identifier and title returned by Linear.
 
-Preferred format is the branch name copied from Linear when available.
+When Linear returns `gitBranchName`, Codex must use it exactly. Otherwise use:
+
+```text
+<owner>/<issue-key-lower>-<short-title-slug>
+```
 
 Accepted formats include:
 
@@ -380,10 +396,10 @@ final changes
 
 Every PR created by Codex must include the Linear issue ID.
 
-Preferred format:
+Required format:
 
 ```text
-GWP-XX: Add account recovery flow
+GWP-XX: <exact Linear issue title>
 ```
 
 ## PR body convention
@@ -396,10 +412,15 @@ Linear issue: GWP-XX
 ## Summary
 - ...
 
+## Root Cause / Prevention
+- Required for defects.
+- Use "N/A - non-defect work" otherwise.
+
 ## Acceptance Criteria
 - [x] ...
 
 ## Verification
+- [x] Targeted tests: `<exact command>`
 - [x] npm test
 - [x] npm run lint
 - [x] npm run typecheck
@@ -494,10 +515,15 @@ PR-comment checkpoint:
 1. Top-level PR conversation comments.
 2. Review submissions.
 3. Inline review threads and thread comments.
+4. Review decision and mergeability.
+5. CI/check status with passing, pending, and failing checks separated.
 
 Codex must triage all new comments, including bot/agent comments. Resolved or
 outdated threads are context, but they do not trigger code changes unless they
 contain new comments that require action.
+
+Codex must report pending or failing CI checks as blockers and must not describe
+the PR as clean or ready while those checks remain pending or failing.
 
 If the PR is merged or closed, Codex must report the final PR state, skip further
 code changes, and avoid moving Linear to `Done`.
@@ -542,9 +568,12 @@ one structured top-level PR conversation comment. This mode is distinct from
 `review PR comments`, which triages incoming reviewer feedback.
 
 Outbound PR review mode may read Linear issue context, workflow checkpoints,
-GitHub PR metadata, changed files, commits, and diff context. It must not edit
-files, commit, push, change Linear status, resolve threads, approve a PR, merge
-a PR, post inline comments, or submit an official GitHub review event.
+GitHub PR metadata, CI/check status, changed files, commits, diff context,
+existing comments/reviews, and prior canonical Codex review candidates. It must
+also read changed files in full plus relevant surrounding modules and tests. It
+must not edit files, commit, push, change Linear status, resolve threads, approve
+a PR, merge a PR, post inline comments, or submit an official GitHub review
+event.
 
 GitHub PR review context is read with the plugin-local helper:
 
@@ -553,22 +582,32 @@ python3 plugins/gwp-linear-workflow/scripts/gwp_pr_review_context.py --issue-id 
 ```
 
 The helper resolves the PR from the issue ID or explicit PR number, verifies the
-expected upstream repository, and emits PR metadata, changed files, and diff
-context as JSON for the reviewer agent.
+expected upstream repository, and emits PR metadata, checks, existing
+comments/reviews, the authenticated GitHub user, canonical review-comment
+candidates, changed files, and diff context as JSON for the reviewer agent.
 
 Outbound review behavior:
 
 1. Fetch the Linear issue and relevant workflow checkpoint comments.
-2. Fetch PR metadata, changed files, commits, and diff context with the helper.
+2. Fetch PR metadata, CI status, existing comments/reviews, changed files,
+   commits, and diff context with the helper.
 3. If the PR is merged or closed, report the final PR state and do not post a review comment unless the developer explicitly asks for a post-merge/post-close review.
-4. Spawn the `gwp_reviewer` agent in read-only mode with the Linear issue, checkpoints, PR metadata, changed files, and diff.
-5. Inspect the reviewer output and normalize it to the required PR comment structure if needed.
-6. Post exactly one top-level PR conversation comment with `gh pr comment --body-file`.
-7. Stop cleanly after posting and summarize the PR URL and review result.
+4. Read changed files in full plus relevant surrounding modules and tests.
+5. Spawn the `gwp_reviewer` agent in read-only mode with the Linear issue,
+   checkpoints, PR metadata, checks, comments/reviews, full-file context, and
+   diff.
+6. Inspect the reviewer output and normalize it to the required PR comment structure if needed.
+7. Include exact commands and passed, failed, skipped, or timed-out results.
+8. If the authenticated user has no canonical review comment, create one. If
+   exactly one exists, update it. If multiple exist, stop and report duplicates.
+   Never edit another user's comment or delete duplicates without approval.
+9. Stop cleanly after posting or updating and summarize the PR URL and review result.
 
 The posted PR comment must use this structure:
 
 ```md
+AI-generated review note
+
 ## Codex PR Review for GWP-XX
 
 Review result: No blocking findings
@@ -1395,36 +1434,45 @@ a branch, editing files, committing, pushing, or creating a PR.
 1. Parse the Linear issue ID from the user request.
 2. Confirm the current Git repository is `olena-ageyeva/gwp-recovery-platform`.
 3. Fetch the Linear issue using the plugin-local `gwp-linear-ops` skill over Linear MCP.
-4. Read title, description, comments, labels, priority, status, and acceptance criteria.
+4. Read identifier, exact title, description, comments, labels, priority,
+   status, assignee, `gitBranchName`, and acceptance criteria.
 5. If issue status is not `Todo`, warn the developer and ask whether to continue.
 6. If the issue is in `Backlog`, `Canceled`, or `Duplicate`, stop unless the developer explicitly overrides.
 7. Run the required preflight checks.
-8. Move the Linear issue to `In Progress` only after the issue, repository, and preflight are confirmed.
-9. Create a branch from `main` using the issue ID.
-10. Spawn the Planning Agent in read-only mode.
-11. Present the implementation plan and acceptance criteria to the developer.
-12. Wait for explicit developer approval. The Planning Agent cannot ask the
+8. Assign the issue to `me`, re-fetch it, and confirm the actual assignee.
+9. Move the Linear issue to `In Progress`, re-fetch it, and confirm the actual
+   status; retry once and report partial success if verification still fails.
+10. Confirm the exact issue key and title, then use Linear `gitBranchName` when
+    present; otherwise create `<owner>/<issue-key-lower>-<short-title-slug>`
+    from fresh `main`.
+11. Spawn the Planning Agent in read-only mode.
+12. Present the implementation plan and acceptance criteria to the developer.
+13. Wait for explicit developer approval. The Planning Agent cannot ask the
     developer directly; relay its open questions and answers in the root session.
-13. After approval, post the approved plan and acceptance criteria as a Linear comment.
-14. Spawn the Development Agent to implement the approved plan.
-15. Require tests to be added or updated for behavior changes.
-16. Run `npm test`.
-17. Run `npm run lint`.
-18. Run `npm run typecheck`.
-19. Run `npm run build`.
-20. If verification fails, repair up to 3 cycles.
-21. Commit the changes to the issue branch with the Linear issue ID in the message.
-22. Spawn the Validation Agent in read-only mode to review the committed diff.
-23. If validation fails, return findings to the Development Agent, repair, recommit, rerun verification, and validate again.
-24. Do not push or create a PR unless validation returns PASS.
-25. Push the issue branch to the upstream repository.
-26. Create a GitHub PR with `gh`, using the Linear issue ID in the title.
-27. Include acceptance criteria and verification results in the PR body.
-28. Move the Linear issue to `In Review`.
-29. Post a PR-created checkpoint to Linear.
-30. Stop and tell the developer to run `check PR comments` or `resume workflow` later.
-31. If manually checking PR comments finds feedback requiring changes, produce a follow-up plan, wait for approval, update the branch, rerun verification and validation, push, and checkpoint the follow-up.
-32. If asked to `review PR for GWP-XX`, spawn the read-only Reviewer Agent, produce one structured review, and post exactly one top-level PR comment without editing files or changing Linear status.
+14. After approval, post the approved plan and acceptance criteria as a Linear comment.
+15. Spawn the Development Agent to read related code/tests and implement the approved plan.
+16. Require tests to be added or updated for behavior changes.
+17. Run targeted tests for the changed behavior.
+18. Run `npm test`.
+19. Run `npm run lint`.
+20. Run `npm run typecheck`.
+21. Run `npm run build`.
+22. If verification fails, repair up to 3 cycles.
+23. Commit the changes to the issue branch with the Linear issue ID in the message.
+24. Spawn the Validation Agent in read-only mode to review the committed diff.
+25. If validation fails, return findings to the Development Agent, repair, recommit, rerun verification, and validate again.
+26. Do not push or create a PR unless validation returns PASS.
+27. Push the issue branch to the upstream repository.
+28. Create a GitHub PR titled `<ISSUE-ID>: <exact Linear title>`.
+29. Include acceptance criteria, targeted/full verification, and conditional
+    defect/frontend evidence in the PR body.
+30. Move the Linear issue to `In Review`, re-fetch and verify it, retrying once.
+31. Post a PR-created checkpoint with the confirmed fetched Linear status.
+32. Stop and tell the developer to run `check PR comments` or `resume workflow` later.
+33. If manually checking PR comments finds feedback requiring changes, produce a follow-up plan, wait for approval, update the branch, rerun verification and validation, push, and checkpoint the follow-up.
+34. If asked to `review PR for GWP-XX`, spawn the read-only Reviewer Agent and
+    create or update one canonical top-level PR comment without editing files or
+    changing Linear status.
 
 ## Hard rules
 
@@ -1434,7 +1482,8 @@ a branch, editing files, committing, pushing, or creating a PR.
 - Never create a PR if `npm run typecheck` fails.
 - Never create a PR if `npm run build` fails.
 - Never create a PR if the Validation Agent fails.
-- Never move an issue to `Done`; `Done` means PR merged.
+- Never move an issue to `Done`; the native integration or a human owns that
+  post-merge transition.
 - Never commit secrets or `.env.local`.
 - Never broaden scope without developer approval.
 - Ask questions when requirements are unclear.
@@ -1509,7 +1558,8 @@ Duplicate
 
 `Done` means the PR was merged.
 
-Codex must not move an issue to `Done` before merge.
+Codex must not move an issue to `Done`; the native integration or a human owns
+that post-merge transition.
 
 ## Security
 
@@ -1659,7 +1709,7 @@ Your job is to convert a Linear issue into a precise implementation plan.
 You may:
 - Read the Linear issue.
 - Read comments and acceptance criteria.
-- Inspect the repository.
+- Inspect related implementation code and existing tests in full.
 - Identify relevant files.
 - Propose a plan.
 - Define testable acceptance criteria.
@@ -1698,11 +1748,17 @@ You are the Development Agent for the GWP Recovery Platform.
 Your job is to implement the approved plan.
 
 You must:
+- Read related implementation code and existing tests before editing.
 - Implement only the approved plan.
 - Keep changes minimal and focused.
 - Add or update tests for changed behavior.
 - Avoid unrelated refactors.
 - Avoid committing secrets.
+- Run targeted tests for changed behavior before the full verification gate.
+- For defects, identify root cause, add regression coverage, and provide
+  root-cause and prevention notes.
+- For frontend changes, perform bounded visual validation when practical or
+  record the exact skip reason.
 - Run npm test.
 - Run npm run lint.
 - Run npm run typecheck.
@@ -1736,6 +1792,7 @@ Review:
 - The approved implementation plan.
 - The acceptance criteria.
 - The git diff against main.
+- Targeted test results.
 - Test results.
 - Lint results.
 - Typecheck results.
@@ -1743,7 +1800,10 @@ Review:
 
 Check:
 - Every acceptance criterion is satisfied.
+- Related implementation code and tests were inspected, not only the diff.
 - Tests are meaningful.
+- Defects include root-cause, prevention, and regression-test evidence.
+- Frontend changes include bounded visual validation or a justified skip.
 - Required commands passed.
 - No unrelated changes were made.
 - No secrets were committed.
@@ -1782,13 +1842,17 @@ comment.
 Review:
 - The Linear issue.
 - Approved-plan, PR-created, PR-comment, and follow-up checkpoints from Linear.
-- The PR title, body, base branch, head branch, changed files, commits, and diff.
+- The PR title, body, base branch, head branch, changed files, commits, diff,
+  CI/check status, comments, reviews, and prior canonical review candidates.
+- Changed files in full plus relevant surrounding modules and tests.
 - Test and validation evidence already present in Linear checkpoints or the PR.
 
 Check issue scope, test evidence, secrets, auth and authorization, billing,
 Stripe, Supabase/data access, privacy, UI, and deployment risk.
 
 Return a structured PR comment beginning with:
+
+AI-generated review note
 
 ## Codex PR Review for GWP-XX
 

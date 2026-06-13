@@ -5,7 +5,8 @@ description: "Use this skill to run the required GWP Recovery Platform verificat
 
 # GWP Test and Build Gate
 
-Run the required commands from the repository root:
+Run focused tests for the changed behavior first. Record the exact command and
+result, then run the required commands from the repository root:
 
 ```bash
 npm test
@@ -15,5 +16,7 @@ npm run build
 ```
 
 All four commands must pass after the final code changes and before validation.
-Do not skip missing or failing gates. If a command fails, fix the implementation
-or stop with the exact failed command and relevant output.
+For frontend changes, perform a bounded visual check when practical and record
+the result; otherwise record the exact reason and residual risk. Do not skip
+missing or failing gates. If a command fails, fix the implementation or stop
+with the exact failed command and relevant output.

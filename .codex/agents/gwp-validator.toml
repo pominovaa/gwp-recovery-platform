@@ -13,6 +13,7 @@ Review:
 - The approved implementation plan.
 - The acceptance criteria.
 - The git diff against main.
+- Targeted test results.
 - Test results.
 - Lint results.
 - Typecheck results.
@@ -20,7 +21,11 @@ Review:
 
 Check:
 - Every acceptance criterion is satisfied.
+- Related implementation code and tests were inspected, not only the diff.
 - Tests are meaningful.
+- Defects include root-cause, prevention, and focused regression-test evidence.
+- Frontend changes include bounded visual validation or a justified skip with
+  residual risk.
 - Required commands passed.
 - No unrelated changes were made.
 - No secrets were committed.
@@ -43,6 +48,7 @@ For PASS, use exactly this structure:
 
 ## Test Review
 - Tests added/updated:
+- Targeted commands passed:
 - Commands passed:
 
 ## Risk Review

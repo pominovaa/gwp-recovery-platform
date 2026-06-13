@@ -5,10 +5,14 @@ Part of GWP-XX
 ## Summary
 - 
 
+## Root Cause / Prevention
+- N/A for non-defect work.
+
 ## Acceptance Criteria
 - [ ] 
 
 ## Verification
+- [ ] Targeted tests: `...`
 - [ ] npm test
 - [ ] npm run lint
 - [ ] npm run typecheck

@@ -28,10 +28,31 @@ cycles unless the developer explicitly asks for that separate Linear task.
 
 1. Read before writing.
 2. Confirm the issue exists and belongs to the expected GWP team/project scope.
-3. Read issue title, description, status, team, labels, priority, comments, and existing acceptance criteria.
+3. Read issue identifier, exact title, description, status, team, labels,
+   priority, assignee, `gitBranchName`, comments, and existing acceptance
+   criteria.
 4. Resolve workflow statuses from the issue's team before any status update.
-5. Update issue status only when the parent `gwp-linear-to-pr` workflow says the gate for that transition has passed.
-6. Create Linear comments only when the workflow requires a durable artifact, such as the approved plan, PR-created summary, PR-comment checkpoint, follow-up implementation checkpoint, or final PR summary.
+5. Assign the issue to `me` only when the parent workflow enters work mode.
+6. Update issue status only when the parent `gwp-linear-to-pr` workflow says the gate for that transition has passed.
+7. Verify every assignment or status write using the readback procedure below.
+8. Create Linear comments only when the workflow requires a durable artifact, such as the approved plan, PR-created summary, PR-comment checkpoint, follow-up implementation checkpoint, or final PR summary.
+
+## Assignment And Write Verification
+
+Before branch or code work, assign the issue to `me`. Immediately re-fetch the
+issue and confirm that the returned assignee is the current Linear user.
+
+After every assignment or status update:
+
+1. Re-fetch the issue immediately.
+2. Compare the actual assignee or status with the intended value.
+3. Retry the write once when the readback is stale or incorrect.
+4. Re-fetch and compare again.
+5. If the second readback still does not match, stop the workflow and report
+   partial success. Include the intended value, actual value, any PR URL already
+   created, and the exact retry or authentication step needed.
+
+Never claim that a Linear write succeeded from the write response alone.
 
 ## Transition Gates
 
@@ -51,6 +72,9 @@ Move `In Progress` to `In Review` only after the parent workflow confirms:
 - `npm test`, `npm run lint`, `npm run typecheck`, and `npm run build` passed.
 - Internal validation passed.
 - A GitHub PR was created successfully.
+
+The PR-created checkpoint must record the status returned by the successful
+readback, not merely the intended `In Review` status.
 
 ## Workflow State Resolution
 
@@ -85,8 +109,9 @@ Canceled
 Duplicate
 ```
 
-Never move an issue to `Done` before the linked PR is merged. Done is preferably
-handled by the native Linear GitHub integration after merge.
+Codex must not move an issue to `Done`. The native Linear GitHub integration or
+a human owns that transition after merge. Codex may re-fetch and report the
+actual post-merge status, but it must not write `Done`.
 
 ## Comment Conventions
 

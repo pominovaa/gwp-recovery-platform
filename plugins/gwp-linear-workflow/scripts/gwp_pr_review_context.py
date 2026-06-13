@@ -113,7 +113,28 @@ def resolve_pr_by_issue(repo: str, issue_id: str) -> int:
     return int(candidates[0]["number"])
 
 
-def fetch_pr_context(repo: str, pr_number: int) -> dict[str, Any]:
+def find_review_comment_candidates(
+    comments: list[dict[str, Any]],
+    viewer_login: str,
+    issue_id: str | None,
+) -> list[dict[str, Any]]:
+    if not issue_id:
+        return []
+
+    marker = f"## Codex PR Review for {issue_id}".lower()
+    return [
+        comment
+        for comment in comments
+        if (comment.get("author") or {}).get("login", "").lower() == viewer_login.lower()
+        and marker in str(comment.get("body") or "").lower()
+    ]
+
+
+def fetch_pr_context(
+    repo: str,
+    pr_number: int,
+    issue_id: str | None = None,
+) -> dict[str, Any]:
     pr = run_json(
         [
             "gh",
@@ -132,6 +153,7 @@ def fetch_pr_context(repo: str, pr_number: int) -> dict[str, Any]:
                     "isDraft",
                     "baseRefName",
                     "headRefName",
+                    "headRefOid",
                     "body",
                     "author",
                     "createdAt",
@@ -144,6 +166,10 @@ def fetch_pr_context(repo: str, pr_number: int) -> dict[str, Any]:
                     "labels",
                     "reviewDecision",
                     "mergeable",
+                    "mergeStateStatus",
+                    "statusCheckRollup",
+                    "comments",
+                    "reviews",
                 ]
             ),
         ]
@@ -161,11 +187,20 @@ def fetch_pr_context(repo: str, pr_number: int) -> dict[str, Any]:
         ]
     ).get("files", [])
     diff = run_text(["gh", "pr", "diff", str(pr_number), "--repo", repo])
+    viewer = run_json(["gh", "api", "user"])
+    viewer_login = str(viewer.get("login") or "")
+    comments = pr.get("comments") or []
 
     return {
         "pull_request": pr,
         "changed_files": changed_files,
         "diff": diff,
+        "viewer_login": viewer_login,
+        "existing_review_comment_candidates": find_review_comment_candidates(
+            comments,
+            viewer_login,
+            issue_id,
+        ),
     }
 
 
@@ -192,7 +227,7 @@ def main() -> int:
         else:
             pr_number = resolve_current_pr_number(repo)
 
-        payload = fetch_pr_context(repo, pr_number)
+        payload = fetch_pr_context(repo, pr_number, args.issue_id)
         payload["repository"] = repo
         print(json.dumps(payload, indent=2))
         return 0
