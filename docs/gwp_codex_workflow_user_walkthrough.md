@@ -15,7 +15,10 @@ can be pasted directly into the terminal.
 
 Windows note: These examples use POSIX-style paths and command syntax. On
 Windows, use Git Bash as the closest match, or use PowerShell with Windows paths
-such as `C:\Users\<you>\projects\gwp-recovery-platform`.
+such as `C:\Users\<you>\projects\gwp-recovery-platform`. The PowerShell examples
+use `codex.cmd` and `npm.cmd` because Windows may otherwise select the npm
+PowerShell shims (`codex.ps1` and `npm.ps1`), which fail when script execution is
+disabled.
 
 ## 1. Start from the repository root
 
@@ -53,13 +56,19 @@ codex plugin marketplace add ./
 Windows PowerShell alternative:
 
 ```powershell
-codex plugin marketplace add .
+codex.cmd plugin marketplace add .
 ```
 
 Install the workflow plugin from that marketplace:
 
 ```bash
 codex plugin add gwp-linear-workflow@gwp-recovery-platform
+```
+
+Windows PowerShell alternative:
+
+```powershell
+codex.cmd plugin add gwp-linear-workflow@gwp-recovery-platform
 ```
 
 If Codex reports that the marketplace or plugin is already installed, continue
@@ -73,13 +82,26 @@ Authenticate the bundled Linear MCP server:
 codex mcp login linear
 ```
 
+Windows PowerShell alternative:
+
+```powershell
+codex.cmd mcp login linear
+```
+
 This opens a browser OAuth flow. Complete the browser login, then return to the
-terminal.
+terminal. The command waits for the browser callback and does not finish until
+the OAuth flow is completed.
 
 Verify that the Linear MCP server is available:
 
 ```bash
 codex mcp list
+```
+
+Windows PowerShell alternative:
+
+```powershell
+codex.cmd mcp list
 ```
 
 The output should include a Linear MCP entry.
@@ -163,6 +185,12 @@ untrusted project. If it reports `linear is not authenticated`, run:
 codex mcp login linear
 ```
 
+Windows PowerShell alternative:
+
+```powershell
+codex.cmd mcp login linear
+```
+
 ## 7. Start a Linear issue workflow
 
 Start the workflow from Codex, not from the shell. In the Codex prompt, enter:
@@ -243,16 +271,40 @@ must then run and pass:
 npm test
 ```
 
+Windows PowerShell alternative:
+
+```powershell
+npm.cmd test
+```
+
 ```bash
 npm run lint
+```
+
+Windows PowerShell alternative:
+
+```powershell
+npm.cmd run lint
 ```
 
 ```bash
 npm run typecheck
 ```
 
+Windows PowerShell alternative:
+
+```powershell
+npm.cmd run typecheck
+```
+
 ```bash
 npm run build
+```
+
+Windows PowerShell alternative:
+
+```powershell
+npm.cmd run build
 ```
 
 For defects, the PR must include root-cause and prevention notes plus focused
@@ -356,16 +408,40 @@ Approved PR-feedback changes follow the same gate as the original work:
 npm test
 ```
 
+Windows PowerShell alternative:
+
+```powershell
+npm.cmd test
+```
+
 ```bash
 npm run lint
+```
+
+Windows PowerShell alternative:
+
+```powershell
+npm.cmd run lint
 ```
 
 ```bash
 npm run typecheck
 ```
 
+Windows PowerShell alternative:
+
+```powershell
+npm.cmd run typecheck
+```
+
 ```bash
 npm run build
+```
+
+Windows PowerShell alternative:
+
+```powershell
+npm.cmd run build
 ```
 
 Codex then validates the committed diff, pushes the updated branch only after
