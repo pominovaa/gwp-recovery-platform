@@ -113,6 +113,55 @@ class ReadinessTests(unittest.TestCase):
         self.assertEqual(run.call_count, 2)
 
     @patch("gwp_doctor.run")
+    def test_accepts_windows_o_auth_status(self, run) -> None:
+        run.side_effect = [
+            completed(
+                ["codex", "mcp", "list", "--json"],
+                stdout=json.dumps(
+                    [
+                        {
+                            "name": "linear",
+                            "enabled": True,
+                            "auth_status": "o_auth",
+                        }
+                    ]
+                ),
+            ),
+            completed(
+                ["codex", "exec"],
+                stdout="\n".join(
+                    [
+                        json.dumps(
+                            {
+                                "type": "item.completed",
+                                "item": {
+                                    "type": "mcp_tool_call",
+                                    "server": "linear",
+                                },
+                            }
+                        ),
+                        json.dumps(
+                            {
+                                "type": "item.completed",
+                                "item": {
+                                    "type": "agent_message",
+                                    "text": "GWP_LINEAR_PROBE_OK:GWP-26",
+                                },
+                            }
+                        ),
+                    ]
+                ),
+            ),
+        ]
+
+        passed, label, detail = gwp_doctor.check_linear_mcp("GWP-26")
+
+        self.assertTrue(passed)
+        self.assertEqual(label, "Linear MCP")
+        self.assertIn("read-only fetch for GWP-26 passed", detail)
+        self.assertEqual(run.call_count, 2)
+
+    @patch("gwp_doctor.run")
     def test_detects_installed_enabled_plugin(self, run) -> None:
         run.return_value = completed(
             ["codex", "plugin", "list", "--json"],

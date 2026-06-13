@@ -180,9 +180,10 @@ def check_linear_mcp(issue_id: str) -> tuple[bool, str, str]:
         return fail("Linear MCP", "linear is configured but disabled")
 
     auth_status = str(linear.get("auth_status", "")).lower()
+    normalized_auth_status = auth_status.replace("_", "").replace("-", "")
     if auth_status == "not_logged_in":
         return fail("Linear MCP", "linear is not authenticated; run `codex mcp login linear`")
-    if auth_status not in {"oauth", "bearer_token"}:
+    if normalized_auth_status not in {"oauth", "bearertoken"}:
         return fail(
             "Linear MCP",
             f"linear authentication is {auth_status or 'unknown'}; "
