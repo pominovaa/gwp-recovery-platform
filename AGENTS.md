@@ -23,9 +23,11 @@ When working on a Linear issue:
 3. Claim the issue before the broader preflight and planning; do not roll the
    claim back if a later check fails.
 4. Before switching to another issue branch, automatically stash tracked and
-   untracked non-ignored work with an issue-labeled message, verify the stash
-   and clean worktree, leave the stash intact, and report its ref. Never stash
-   visible secret files or automatically apply the stash to the issue branch.
+   untracked non-ignored work with a message containing the issue ID, exact
+   source branch name captured before stashing, and UTC timestamp. Verify the
+   stash and clean worktree, leave the stash intact, and report its ref and
+   message. Never stash visible secret files or automatically apply the stash to
+   the issue branch.
 5. In resume mode, do not automatically stash dirty work already on the
    intended issue branch.
 6. Prefer Linear `gitBranchName`; otherwise use a branch containing the issue ID.

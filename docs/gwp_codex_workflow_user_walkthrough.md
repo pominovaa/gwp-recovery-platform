@@ -227,9 +227,14 @@ The workflow should:
    preflight checks.
 7. Confirm the exact issue identifier and title.
 8. If switching branches with a dirty worktree, stash tracked and untracked
-   non-ignored changes with a message containing the lowercase issue ID,
-   original branch, and UTC timestamp. Codex verifies and retains the stash,
-   reports its ref, and never applies it to the issue branch automatically.
+   non-ignored changes with a message containing the lowercase issue ID, exact
+   source branch name captured before stashing, and UTC timestamp. Codex
+   verifies and retains the stash, reports its ref and full message, and never
+   applies it to the issue branch automatically. The message uses
+   `gwp-linear-to-pr: pre-branch gwp-xx source-branch=<branch> at <UTC
+   timestamp>` or, for detached HEAD,
+   `gwp-linear-to-pr: pre-branch gwp-xx source-branch=detached-head at <UTC
+   timestamp>`.
 9. Create the branch from Linear `gitBranchName` when present; otherwise use the
    documented owner/issue/title fallback.
 10. Produce an implementation plan and acceptance criteria after reading related
@@ -238,8 +243,10 @@ The workflow should:
 If a visible `.env` or other prohibited secret file is dirty, Codex stops
 before checkout instead of putting the secret into a stash. If stash creation
 or verification fails, the issue remains assigned and `In Progress`, and Codex
-reports the exact recovery step. Resume mode does not auto-stash dirty work
-when already on the intended issue branch.
+reports the exact pre-stash source branch, expected full stash message, any
+created stash ref and actual message, remaining dirty paths, exact failure, and
+exact recovery step. Resume mode does not auto-stash dirty work when already on
+the intended issue branch.
 
 To resume interrupted work, enter:
 

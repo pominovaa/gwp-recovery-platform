@@ -54,8 +54,13 @@ From there:
    write by re-fetching the issue. It then checks GitHub and remaining preflight
    requirements. Before switching branches, it stores dirty tracked and
    untracked non-ignored work in a verified, retained stash whose message
-   identifies the issue, original branch, and UTC timestamp, then creates the
-   branch from Linear `gitBranchName` when available.
+   identifies the issue, exact source branch captured before stashing, and UTC
+   timestamp, then creates the branch from Linear `gitBranchName` when
+   available. The full message is
+   `gwp-linear-to-pr: pre-branch gwp-xx source-branch=<branch> at <UTC
+   timestamp>` or, for detached HEAD,
+   `gwp-linear-to-pr: pre-branch gwp-xx source-branch=detached-head at <UTC
+   timestamp>`.
 2. **Plan.** The read-only Planning Agent produces an implementation plan,
    acceptance criteria, test plan, risks, and open questions. The root Codex
    session shows that plan to the developer.
@@ -189,7 +194,8 @@ The workflow fails safe:
   only inside the Codex sandbox, Codex retries outside the sandbox before
   treating it as a real auth failure.
 - **Dirty-worktree stash failure:** Codex stops before checkout, reports the
-  original branch, any created stash ref, remaining dirty paths, and the exact
+  exact pre-stash source branch, expected full stash message, any created stash
+  ref and actual message, remaining dirty paths, exact failure, and exact
   recovery step. It never stashes visible secret files or automatically applies
   the stash to the issue branch.
 - **Verification fails:** Codex repairs up to 3 cycles, then stops without PR

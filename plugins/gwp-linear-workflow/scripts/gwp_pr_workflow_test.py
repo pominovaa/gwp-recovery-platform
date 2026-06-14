@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
+import re
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 import gwp_pr_comments
@@ -14,6 +16,8 @@ from gwp_resolve_threads import (
     collect_global_blockers,
     resolve_and_verify_threads,
 )
+
+ROOT = Path(__file__).resolve().parents[3]
 
 
 class SubprocessEncodingTests(unittest.TestCase):
@@ -310,6 +314,70 @@ class ThreadResolutionSafeguardTests(unittest.TestCase):
         fetch_all.assert_called_once()
         self.assertEqual(result["verificationFailures"], ["thread-1"])
         self.assertEqual(result["notAttemptedThreadIds"], ["thread-2"])
+
+
+class WorkflowDocumentationContractTests(unittest.TestCase):
+    @staticmethod
+    def normalized_section(path: Path, start: str, end: str) -> str:
+        text = path.read_text(encoding="utf-8")
+        section = text.split(start, 1)[1].split(end, 1)[0]
+        return re.sub(r"\s+", " ", section)
+
+    def test_stash_contract_covers_source_branch_and_detached_head(self) -> None:
+        paths = [
+            ROOT / "plugins/gwp-linear-workflow/skills/gwp-linear-to-pr/SKILL.md",
+            ROOT / "docs/gwp_codex_workflow_plugin_spec.md",
+            ROOT / "docs/gwp_codex_workflow_user_walkthrough.md",
+            ROOT / "docs/gwp_codex_workflow_developer_experience.md",
+        ]
+
+        for path in paths:
+            text = re.sub(r"\s+", " ", path.read_text(encoding="utf-8"))
+            with self.subTest(path=path):
+                self.assertIn(
+                    "gwp-linear-to-pr: pre-branch gwp-xx "
+                    "source-branch=<branch> at <UTC timestamp>",
+                    text,
+                )
+                self.assertIn(
+                    "gwp-linear-to-pr: pre-branch gwp-xx "
+                    "source-branch=detached-head at <UTC timestamp>",
+                    text,
+                )
+
+    def test_stash_failure_contract_reports_full_recovery_context(self) -> None:
+        sections = [
+            (
+                ROOT / "plugins/gwp-linear-workflow/skills/gwp-linear-to-pr/SKILL.md",
+                "`--include-untracked` excludes ignored files.",
+                "### GitHub CLI sandbox handling",
+            ),
+            (
+                ROOT / "docs/gwp_codex_workflow_plugin_spec.md",
+                "### Dirty-worktree stash or verification fails",
+                "### Planning reveals missing requirements",
+            ),
+            (
+                ROOT / "docs/gwp_codex_workflow_user_walkthrough.md",
+                "If a visible `.env` or other prohibited secret file is dirty",
+                "To resume interrupted work, enter:",
+            ),
+            (
+                ROOT / "docs/gwp_codex_workflow_developer_experience.md",
+                "- **Dirty-worktree stash failure:**",
+                "- **Verification fails:**",
+            ),
+        ]
+
+        required = (
+            "exact pre-stash source branch, expected full stash message, "
+            "any created stash ref and actual message, remaining dirty paths, "
+            "exact failure, and exact recovery step"
+        )
+        for path, start, end in sections:
+            text = self.normalized_section(path, start, end)
+            with self.subTest(path=path):
+                self.assertIn(required, text)
 
 
 if __name__ == "__main__":

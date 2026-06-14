@@ -259,11 +259,17 @@ for separate developer approval.
 
    ```bash
    git stash push --include-untracked \
-     -m "gwp-linear-to-pr: pre-branch gwp-xx from <branch> at <UTC timestamp>"
+     -m "gwp-linear-to-pr: pre-branch gwp-xx source-branch=<branch> at <UTC timestamp>"
    ```
 
-4. The stash message must contain the lowercase issue ID, the original branch,
-   and a UTC timestamp.
+4. Replace `<branch>` with the exact branch name recorded before stashing, or
+   `detached-head` when applicable. The stash message must retain the workflow
+   prefix and purpose and contain the lowercase issue ID, exact
+   `source-branch=<branch>` value, and a UTC timestamp. Do not derive the source
+   branch after the stash or after checkout. For detached HEAD, the exact value
+   produces the complete message
+   `gwp-linear-to-pr: pre-branch gwp-xx source-branch=detached-head at <UTC
+   timestamp>`.
 5. Verify that a new stash entry exists with the expected message and capture
    its exact stash ref.
 6. Verify that `git status --porcelain` is empty before checking out or creating
@@ -275,7 +281,9 @@ for separate developer approval.
 `--include-untracked` intentionally excludes ignored files. If stashing fails,
 the expected stash cannot be verified, or the worktree remains dirty, stop
 before checkout. Report that the issue remains claimed and `In Progress`, along
-with the exact Git/stash failure and recovery step.
+with the exact pre-stash source branch, expected full stash message, any created
+stash ref and actual message, remaining dirty paths, exact failure, and exact
+recovery step.
 
 Resume mode must not automatically stash when the current branch is already the
 intended issue branch; dirty changes there may be legitimate in-progress issue
@@ -1572,10 +1580,12 @@ a branch, editing files, committing, pushing, or creating a PR.
     present; otherwise create `<owner>/<issue-key-lower>-<short-title-slug>`
     from fresh `main`.
 12. Before switching to a different issue branch, automatically stash tracked
-    and untracked changes with `--include-untracked`, an issue-labeled message,
-    the original branch, and a UTC timestamp. Reject visible secret files,
-    verify the new stash and clean worktree, retain the stash, and report its
-    ref. Do not auto-stash resume work already on the intended issue branch.
+    and untracked changes with `--include-untracked`, an issue-and-source-labeled
+    message containing the exact source branch name captured before stashing and
+    a UTC timestamp.
+    Reject visible secret files, verify the new stash message and clean
+    worktree, retain the stash, and report its ref and message. Do not
+    auto-stash resume work already on the intended issue branch.
 13. Spawn the Planning Agent in read-only mode.
 14. Present the implementation plan and acceptance criteria to the developer.
 15. Wait for explicit developer approval. The Planning Agent cannot ask the
@@ -2086,9 +2096,10 @@ Warn the developer and ask whether to continue.
 ### Dirty-worktree stash or verification fails
 
 Stop before checking out another branch. Leave the issue assigned and
-`In Progress`. Report the original branch, intended issue branch, stash command
-or verification failure, any created stash ref, remaining dirty paths, and the
-exact recovery step. Do not pop or apply a stash automatically.
+`In Progress`. Report the intended issue branch, exact pre-stash source branch,
+expected full stash message, any created stash ref and actual message, remaining
+dirty paths, exact failure, and exact recovery step. Do not pop or apply a stash
+automatically.
 
 ### Planning reveals missing requirements
 

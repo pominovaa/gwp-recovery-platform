@@ -118,17 +118,25 @@ Before checking out a different issue branch:
 
    ```bash
    git stash push --include-untracked \
-     -m "gwp-linear-to-pr: pre-branch gwp-xx from <branch> at <UTC timestamp>"
+     -m "gwp-linear-to-pr: pre-branch gwp-xx source-branch=<branch> at <UTC timestamp>"
    ```
 
-4. Verify a new stash exists with the expected lowercase issue ID, original
-   branch, and timestamp in its message; capture the exact stash ref.
+4. Substitute the exact branch recorded in step 1 for `<branch>`; do not derive
+   it after the stash or after checkout. Verify a new stash exists with the
+   expected lowercase issue ID, exact `source-branch=<branch>` value, and UTC
+   timestamp in its message; capture the exact stash ref. For detached HEAD,
+   the complete message is
+   `gwp-linear-to-pr: pre-branch gwp-xx source-branch=detached-head at <UTC
+   timestamp>`.
 5. Verify `git status --porcelain` is empty before checkout.
 6. Leave the stash intact and report its ref and message. Never pop or apply it
    to the issue branch automatically.
 
 `--include-untracked` excludes ignored files. If stashing or verification fails,
 stop before checkout and report that the issue remains claimed and `In Progress`.
+Report the exact pre-stash source branch, expected full stash message, any
+created stash ref and actual message, remaining dirty paths, exact failure, and
+exact recovery step.
 Do not automatically stash resume work when already on the intended issue
 branch; those changes may belong to the active issue.
 

@@ -69,9 +69,11 @@ The workflow fetches the issue, runs a minimal claim gate, immediately assigns
 the issue to the current developer, moves an eligible `Todo` issue to
 `In Progress`, and verifies both writes. It then runs the remaining preflight,
 automatically stashes tracked and untracked non-ignored work before switching
-branches, prefers Linear `gitBranchName`, produces a read-only plan, and waits
-for developer approval. The created stash is verified, retained, and reported;
-it is never automatically applied to the issue branch. After approval, Codex
+branches using a message that includes the issue ID, exact source branch name,
+and UTC timestamp. It prefers Linear `gitBranchName`, produces a read-only plan,
+and waits for developer approval. The created stash is verified, retained, and
+reported with its ref and full message; it is never automatically applied to
+the issue branch. After approval, Codex
 implements with targeted and full verification, validates the committed diff,
 opens a GitHub PR, verifies the move to `In Review`, and stops cleanly. Any
 workflow path that changes code commits the changes and pushes the issue branch
