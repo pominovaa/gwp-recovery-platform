@@ -102,7 +102,13 @@ gwp-linear-to-pr review PR comments for GWP-XX
 When new PR feedback may require code changes, Codex produces a follow-up plan
 and waits for approval before editing, committing, pushing, or updating the PR.
 When no code update is needed, Codex replies to the original GitHub comment with
-the reason and records the handled feedback in Linear.
+the reason and records the handled feedback in Linear. No-code inline threads
+may then be resolved without a synthetic follow-up approval cycle. After
+code-changing feedback is approved, implemented, validated, pushed, and green in
+GitHub, Codex also resolves only the addressed inline threads. The resolver
+refuses stale heads, pending or failing checks, newer unhandled reviewer
+comments, and missing required evidence replies; outdated state alone is not
+sufficient. Resolution IDs and outcomes are recorded in the Linear checkpoint.
 
 To have Codex review the PR itself and create or update one structured top-level
 PR comment,

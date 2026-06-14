@@ -108,13 +108,21 @@ Codex reads:
 All new comments are triaged, including bot or agent comments. Informational
 comments that need no code change get a direct GitHub reply explaining why no
 change is needed, then Codex records the handled ID in a Linear PR-comment
-checkpoint. Comments that may require changes produce a follow-up plan. Codex
-must wait for developer approval before editing files, committing, pushing, or
-resolving threads.
+checkpoint. An inline no-code thread can then be resolved automatically against
+the current validated, green head without a synthetic follow-up approval plan.
+Comments that may require changes produce a follow-up plan. Codex must wait for
+developer approval before editing files, committing, pushing, or resolving those
+threads.
 
 Approved PR-feedback changes go through the same guarded loop as the original
 implementation: Development Agent, required npm commands, commit with the Linear
-issue ID, Validation Agent, push after `PASS`, and Linear follow-up checkpoint.
+issue ID, Validation Agent, and push after `PASS`. Once the exact pushed head's
+GitHub checks pass, Codex automatically resolves directly addressed inline
+threads. It first re-fetches the thread, blocks on newer unhandled comments,
+requires a newer evidence reply for human-authored or no-code threads, and
+verifies the resolution write. Outdated state alone is insufficient. The Linear
+follow-up checkpoint records handled comment IDs, resolved thread IDs, and any
+blocked or failed outcome.
 
 When the developer wants Codex to review the current PR itself and publish
 feedback, they ask:

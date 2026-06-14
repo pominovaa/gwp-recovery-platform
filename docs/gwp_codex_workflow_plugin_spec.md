@@ -591,7 +591,8 @@ PR-comment checkpoint:
 
 Codex must triage all new comments, including bot/agent comments. Resolved or
 outdated threads are context, but they do not trigger code changes unless they
-contain new comments that require action.
+contain new comments that require action. An outdated diff location alone is not
+evidence that an unresolved thread may be resolved.
 
 Codex must report pending or failing CI checks as blockers and must not describe
 the PR as clean or ready while those checks remain pending or failing.
@@ -601,14 +602,20 @@ code changes, and avoid moving Linear to `Done`.
 
 If a new comment needs no code update, Codex must reply to the original GitHub
 comment explaining why no code change is needed, then post a PR-comment
-checkpoint with the handled GitHub ID.
+checkpoint with the handled GitHub ID. If the comment belongs to an inline
+thread, that thread may be resolved only after the automatic resolution
+safeguards below pass against the current validated head. This no-code path does
+not require a synthetic follow-up approval cycle, but it does require a newer
+evidence reply. Top-level comments and review submissions do not expose a
+resolvable conversation state.
 
 If any new comment may require a change, Codex must:
 
 1. Summarize the feedback.
 2. Produce a follow-up implementation plan.
 3. Ask the developer for approval.
-4. Avoid editing files, committing, pushing, or resolving GitHub threads until approval is received.
+4. Avoid editing files, committing, pushing, replying, or resolving GitHub
+   threads until approval is received.
 
 For approved PR-feedback changes, Codex runs the same guarded update cycle as
 the original implementation:
@@ -618,8 +625,23 @@ the original implementation:
 3. Codex commits with the Linear issue ID in the message.
 4. Validation Agent reviews the committed diff.
 5. Codex pushes the updated branch only after validation returns PASS.
-6. Codex posts follow-up implementation and PR-comment checkpoints to Linear.
-7. Codex stops cleanly and tells the developer to run another manual PR comment check when they want Codex to inspect later feedback.
+6. Codex waits for the exact pushed head's required GitHub checks to pass.
+7. Codex re-fetches each target inline thread and automatically resolves it only
+   when all of these safeguards hold:
+   - the PR is open and its current head equals the validated pushed commit;
+   - required GitHub checks are passing;
+   - the approved finding is directly addressed by the current code or response;
+   - every external comment in the thread is recorded as handled;
+   - no newer unresolved external comment appeared after implementation;
+   - human-authored threads and no-code resolutions have a newer evidence reply
+     from the authenticated GitHub user.
+8. Codex verifies every resolution write by re-fetching the thread. A failed
+   write or readback stops later resolution writes and is partial progress that
+   must identify resolved, failed, and not-attempted thread IDs. Already-resolved
+   threads are idempotent success. Outdated state alone never qualifies a thread.
+9. Codex posts follow-up implementation and PR-comment checkpoints to Linear,
+   including handled comment IDs, resolved thread IDs, and per-thread outcomes.
+10. Codex stops cleanly and tells the developer to run another manual PR comment check when they want Codex to inspect later feedback.
 
 GitHub review comments are read with the plugin-local helper:
 
@@ -630,6 +652,24 @@ python3 plugins/gwp-linear-workflow/scripts/gwp_pr_comments.py --issue-id GWP-XX
 Codex must pass one `--handled-id <id>` argument for each GitHub comment,
 review, review-thread, and review-thread-comment ID already recorded in the
 latest Linear PR-comment checkpoint.
+
+Guarded inline-thread resolution uses the plugin-local helper:
+
+```bash
+python3 plugins/gwp-linear-workflow/scripts/gwp_resolve_threads.py \
+  --issue-id GWP-XX \
+  --expected-head <commit-sha> \
+  --thread-id <thread-id> \
+  --handled-comment-id <comment-id> \
+  --addressed-thread-id <thread-id>
+```
+
+The default invocation is a read-only eligibility check. Codex must inspect that
+output before adding `--validation-passed --resolve`. It adds
+`--require-reply-thread-id <thread-id>` for human-authored or no-code threads.
+The helper accepts only inline review-thread node IDs, validates all requested
+threads before the first write, blocks if the fetched thread-comment list is
+truncated, and verifies resolution readback.
 
 ## Outbound PR reviews
 
@@ -854,8 +894,12 @@ state. Required checkpoint types are:
 
 1. Approved-plan checkpoint with the approved plan, acceptance criteria, test plan, and risk notes.
 2. PR-created checkpoint with branch, PR URL, PR number, base branch, verification results, validation result, and Linear status.
-3. PR-comment checkpoint with check timestamp, triage summary, and handled GitHub comment/review/thread IDs.
-4. Follow-up implementation checkpoint with approved follow-up plan, GitHub feedback IDs addressed, commit SHA, verification results, and validation result.
+3. PR-comment checkpoint with check timestamp, triage summary, handled GitHub
+   comment/review/thread IDs, resolved inline-thread IDs, and per-thread
+   resolution outcomes.
+4. Follow-up implementation checkpoint with approved follow-up plan, GitHub
+   feedback IDs addressed, commit SHA, verification results, validation result,
+   and automatic-resolution results.
 
 Resume mode must read these checkpoint comments before deciding whether to
 re-plan, continue implementation, update an open PR, or run a manual PR comment check.
@@ -1282,6 +1326,7 @@ gwp-linear-workflow/
   scripts/
     gwp_doctor.py          # local preflight/check helper
     gwp_pr_comments.py     # GitHub PR comment/review-thread state helper
+    gwp_resolve_threads.py # guarded inline review-thread resolution helper
     gwp_pr_review_context.py
                            # GitHub PR metadata/diff helper for outbound reviews
 

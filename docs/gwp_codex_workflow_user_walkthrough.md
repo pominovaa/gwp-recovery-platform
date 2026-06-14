@@ -424,6 +424,8 @@ are pending or failing.
 
 If no code update is needed for a comment, Codex replies to the original GitHub
 comment explaining why no change is needed and records the handled ID in Linear.
+An inline no-code thread may then be resolved automatically against the current
+validated, green head; it does not require a synthetic follow-up approval plan.
 If a comment may require changes, Codex presents a follow-up plan and waits for
 approval before editing code.
 
@@ -469,9 +471,18 @@ Windows PowerShell alternative:
 npm.cmd run build
 ```
 
-Codex then validates the committed diff, pushes the updated branch only after
-validation passes, records a Linear checkpoint, and stops cleanly. Run another
-manual PR comment check later if more feedback arrives.
+Codex then validates the committed diff and pushes the updated branch only after
+validation passes. After the exact pushed head is green in GitHub, it re-fetches
+the addressed inline threads and automatically resolves only those that still
+have no newer unhandled reviewer comment. Human-authored threads and no-code
+resolutions require a newer evidence reply. The resolver verifies the current
+head, checks, handled comment IDs, and each resolution readback; outdated state
+alone is not enough. Codex records handled IDs, resolved thread IDs, and any
+blocked or failed resolution outcome in Linear, then stops cleanly.
+
+Run another manual PR comment check later if more feedback arrives. Top-level PR
+comments and review submissions remain handled records because GitHub does not
+make them resolvable conversations.
 
 If the PR is merged or closed, Codex reports the final PR state and does not make
 more code changes. Codex still does not move Linear to `Done`; merge completion

@@ -52,6 +52,12 @@ npm run build
 19. For frontend changes, record bounded visual validation or a skip reason.
 20. For any workflow path that changes repository files, commit the changes and
     push the issue branch to GitHub before reporting completion.
+21. After PR feedback is either triaged as no-code or approved and implemented,
+    automatically resolve only directly addressed inline review threads against
+    a validated, pushed, green head. Re-fetch first, block on newer unhandled
+    comments, require an evidence reply for human-authored or no-code threads,
+    verify every resolution write, and record thread IDs and outcomes in Linear.
+    Outdated state alone is insufficient.
 
 ## Linear Statuses
 

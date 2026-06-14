@@ -235,13 +235,22 @@ Comment-check behavior:
    decision, mergeability, and CI/check status once.
 2. If the PR state is merged or closed, report the final PR state and do not make further code changes.
 3. Triage all new comments, including bot/agent comments.
-4. Treat resolved or outdated threads as context; do not change code from them unless they contain new comments that require action.
+4. Treat resolved or outdated threads as context; do not change code from them
+   unless they contain new comments that require action. Outdated state alone is
+   never evidence that an unresolved thread may be resolved.
 5. Report pending or failing CI checks as blockers even when no new review
    comment requires code changes. Do not describe the PR as clean or ready while
    checks are pending or failing.
 6. If any new comment may require a change, produce a follow-up implementation plan and ask for developer approval.
-7. If no code update is needed for a new comment, reply to the original GitHub comment explaining why no change is needed, then post a Linear PR-comment checkpoint with the handled ID.
-8. Do not edit files, commit, push, reply on GitHub, or resolve GitHub threads before the developer approves a follow-up plan, except for the explicit no-code-change reply described above.
+7. If no code update is needed for a new comment, reply to the original GitHub
+   comment explaining why no change is needed. For an inline thread, it may be
+   automatically resolved without a follow-up approval cycle only after the
+   guarded resolution checks below pass against the current validated head. Use
+   `--require-reply-thread-id` for this path. Top-level comments and review
+   submissions cannot be resolved.
+8. For feedback that may require a code change, do not edit files, commit, push,
+   reply on GitHub, or resolve GitHub threads before the developer approves the
+   follow-up plan.
 
 For approved PR-feedback changes:
 
@@ -250,8 +259,38 @@ For approved PR-feedback changes:
 3. Commit with the Linear issue ID in the commit message.
 4. Spawn the `gwp_validator` agent to validate the updated committed diff.
 5. Push the updated branch only after validation returns PASS.
-6. Use `gwp-linear-ops` to post a follow-up implementation checkpoint and a PR-comment checkpoint with handled GitHub IDs.
-7. Stop cleanly and tell the developer to run `gwp-linear-to-pr check PR comments for GWP-XX` again when they want another one-time check.
+6. Wait for the pushed head's required GitHub checks to pass, then re-fetch the
+   target inline threads. Resolve only threads whose approved finding is
+   directly addressed by that exact head and whose external comment IDs are all
+   handled. A newer external comment blocks resolution.
+7. Require a newer evidence reply from the authenticated GitHub user before
+   resolving human-authored threads or any thread handled without a code change.
+8. Run the resolver without `--resolve` first and inspect its eligibility output,
+   then run it with `--validation-passed --resolve`. The helper verifies the PR
+   is open, the expected head is current, checks are passing, no newer external
+   comment exists, and every resolution write succeeds on readback:
+
+```bash
+python3 plugins/gwp-linear-workflow/scripts/gwp_resolve_threads.py \
+  --issue-id GWP-XX \
+  --expected-head <commit-sha> \
+  --thread-id <thread-id> \
+  --handled-comment-id <comment-id> \
+  --addressed-thread-id <thread-id>
+```
+
+Add `--require-reply-thread-id <thread-id>` when the evidence-reply safeguard
+applies. Add `--validation-passed --resolve` only after the dry run is eligible.
+Never use the helper in outbound review mode.
+
+9. Use `gwp-linear-ops` to post a follow-up implementation checkpoint and a
+   PR-comment checkpoint with handled GitHub IDs, resolved thread IDs, and
+   resolution outcomes.
+10. Stop cleanly and tell the developer to run `gwp-linear-to-pr check PR comments for GWP-XX` again when they want another one-time check.
+
+If a resolution mutation or readback fails, stop further resolution writes,
+leave already-completed resolutions intact, and report the resolved, failed, and
+not-attempted thread IDs as partial progress. Do not roll back the pushed code.
 
 ## Outbound PR Review
 

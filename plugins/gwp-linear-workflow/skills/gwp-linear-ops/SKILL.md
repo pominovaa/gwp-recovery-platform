@@ -159,6 +159,8 @@ PR-comment checkpoint comments should include:
 - PR URL and PR number.
 - Check timestamp.
 - GitHub comment, review, review-thread, and review-thread-comment IDs already handled.
+- Inline review-thread IDs automatically resolved, plus the verified outcome
+  for each attempted resolution.
 - Summary of comments triaged as informational.
 - Summary of comments that produced an approved follow-up plan, if any.
 
@@ -171,6 +173,8 @@ Follow-up implementation checkpoint comments should include:
 - Commit SHA.
 - Verification command results.
 - Validation result.
+- Resolved inline review-thread IDs and any thread that remained unresolved
+  because a safeguard blocked the write.
 
 ## Failure Behavior
 

@@ -33,6 +33,7 @@ query(
       isDraft
       baseRefName
       headRefName
+      headRefOid
       updatedAt
       mergedAt
 
@@ -73,6 +74,7 @@ query(
           originalStartLine
           resolvedBy { login }
           comments(first: 100) {
+            pageInfo { hasNextPage endCursor }
             nodes {
               id
               body
@@ -310,6 +312,7 @@ def fetch_all(repo: str, number: int) -> dict[str, Any]:
                 "isDraft": pr["isDraft"],
                 "baseRefName": pr["baseRefName"],
                 "headRefName": pr["headRefName"],
+                "headRefOid": pr["headRefOid"],
                 "updatedAt": pr["updatedAt"],
                 "mergedAt": pr["mergedAt"],
                 "repository": f"{owner}/{repo_name}",
