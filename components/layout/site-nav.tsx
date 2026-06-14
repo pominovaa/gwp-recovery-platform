@@ -166,13 +166,22 @@ export function SiteNav() {
             <Link href="/find-support" aria-label="Upgrade to customize" className="flex h-10 w-10 items-center justify-center rounded-full border border-stone-200 bg-white text-xs font-semibold text-stone-700 shadow-sm transition hover:bg-stone-50">
               <CustomizeIcon />
             </Link>
-            <button
-              type="button"
-              onClick={() => setAccountOpen(true)}
-              className="inline-flex h-10 items-center justify-center rounded-full border border-stone-200 bg-white px-4 text-sm font-semibold text-stone-950 shadow-sm transition hover:bg-stone-50"
-            >
-              {session ? profileInitials : "Sign up / Log in"}
-            </button>
+            {session ? (
+              <Link
+                href="/account"
+                className="inline-flex h-10 items-center justify-center rounded-full border border-stone-200 bg-white px-4 text-sm font-semibold text-stone-950 shadow-sm transition hover:bg-stone-50"
+              >
+                {profileInitials}
+              </Link>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setAccountOpen(true)}
+                className="inline-flex h-10 items-center justify-center rounded-full border border-stone-200 bg-white px-4 text-sm font-semibold text-stone-950 shadow-sm transition hover:bg-stone-50"
+              >
+                Sign up / Log in
+              </button>
+            )}
           </nav>
 
           <button className="rounded-xl p-2 md:hidden" onClick={() => setOpen((value) => !value)} aria-label="Toggle navigation">
@@ -191,16 +200,26 @@ export function SiteNav() {
               <Link href="/find-help" className="inline-flex w-fit items-center gap-2 rounded-full bg-rose-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm" onClick={() => setOpen(false)}>
                 Find help <LifeBuoy className="h-4 w-4" />
               </Link>
-              <button
-                type="button"
-                onClick={() => {
-                  setOpen(false);
-                  setAccountOpen(true);
-                }}
-                className="inline-flex h-10 w-fit items-center justify-center rounded-full border border-stone-200 bg-white px-4 text-sm font-semibold text-stone-950 shadow-sm"
-              >
-                {session ? profileInitials : "Sign up / Log in"}
-              </button>
+              {session ? (
+                <Link
+                  href="/account"
+                  className="inline-flex h-10 w-fit items-center justify-center rounded-full border border-stone-200 bg-white px-4 text-sm font-semibold text-stone-950 shadow-sm"
+                  onClick={() => setOpen(false)}
+                >
+                  {profileInitials}
+                </Link>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setOpen(false);
+                    setAccountOpen(true);
+                  }}
+                  className="inline-flex h-10 w-fit items-center justify-center rounded-full border border-stone-200 bg-white px-4 text-sm font-semibold text-stone-950 shadow-sm"
+                >
+                  Sign up / Log in
+                </button>
+              )}
             </div>
           </div>
         )}

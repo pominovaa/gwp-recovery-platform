@@ -55,6 +55,15 @@ const storyVideos = [
 
 const reviewedResources = [
   {
+    name: "Equip",
+    url: "https://equip.health/our-treatment",
+    category: "Treatment provider resource",
+    audience: "People and families considering virtual eating-disorder treatment support",
+    cost: "Insurance coverage and consultation pathways may be available",
+    description:
+      "Virtual eating-disorder treatment information describing multidisciplinary care options, including therapy, medical care, dietitian support, psychiatry, and peer mentorship.",
+  },
+  {
     name: "Liv Label Free",
     url: "https://www.livlabelfree.com/",
     category: "Neurodiversity-affirming ED recovery",

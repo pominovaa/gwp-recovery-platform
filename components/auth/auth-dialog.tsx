@@ -1,5 +1,6 @@
 "use client";
 
+import type { Session } from "@supabase/supabase-js";
 import { AccountPanel } from "@/components/auth/account-panel";
 import { AuthForm } from "@/components/auth/auth-form";
 import { Dialog, DialogContent, DialogHeader } from "@/components/ui/dialog";
@@ -19,7 +20,7 @@ type AuthDialogProps = {
   onSubmit: (event: React.FormEvent<HTMLFormElement>) => void;
   open: boolean;
   profileInitials: string;
-  session: any;
+  session: Session | null;
 };
 
 export function AuthDialog({

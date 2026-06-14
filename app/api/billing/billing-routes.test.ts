@@ -26,6 +26,10 @@ function createSupabaseQuery(profile: Record<string, unknown> | null = null) {
   return query;
 }
 
+function mockSupabaseUserResponse(response: unknown) {
+  vi.mocked(supabaseAdmin.auth.getUser).mockResolvedValueOnce(response as never);
+}
+
 describe("billing API routes", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -33,7 +37,7 @@ describe("billing API routes", () => {
   });
 
   it("checkout returns 401 without a valid user", async () => {
-    vi.mocked(supabaseAdmin.auth.getUser).mockResolvedValueOnce({ data: { user: null }, error: null });
+    mockSupabaseUserResponse({ data: { user: null }, error: null });
     const { POST } = await import("@/app/api/billing/checkout/route");
 
     const response = await POST(createRequest({ planId: "light" }));
@@ -43,7 +47,7 @@ describe("billing API routes", () => {
   });
 
   it("checkout rejects unknown plans", async () => {
-    vi.mocked(supabaseAdmin.auth.getUser).mockResolvedValueOnce({
+    mockSupabaseUserResponse({
       data: { user: { id: "user_1", email: "alex@example.com" } },
       error: null,
     });
@@ -56,7 +60,7 @@ describe("billing API routes", () => {
   });
 
   it("checkout creates a Stripe session for an existing customer", async () => {
-    vi.mocked(supabaseAdmin.auth.getUser).mockResolvedValueOnce({
+    mockSupabaseUserResponse({
       data: { user: { id: "user_1", email: "alex@example.com" } },
       error: null,
     });
@@ -83,7 +87,7 @@ describe("billing API routes", () => {
   });
 
   it("checkout creates and stores a Stripe customer when missing", async () => {
-    vi.mocked(supabaseAdmin.auth.getUser).mockResolvedValueOnce({
+    mockSupabaseUserResponse({
       data: { user: { id: "user_1", email: "alex@example.com" } },
       error: null,
     });
@@ -109,7 +113,7 @@ describe("billing API routes", () => {
 
   it("checkout resolves product IDs before creating a Stripe session", async () => {
     vi.stubEnv("STRIPE_LIGHT_PRICE_ID", "prod_light_test");
-    vi.mocked(supabaseAdmin.auth.getUser).mockResolvedValueOnce({
+    mockSupabaseUserResponse({
       data: { user: { id: "user_1", email: "alex@example.com" } },
       error: null,
     });
@@ -137,7 +141,7 @@ describe("billing API routes", () => {
 
   it("checkout returns a user-safe error when a plan price is not configured", async () => {
     vi.stubEnv("STRIPE_LIGHT_PRICE_ID", "");
-    vi.mocked(supabaseAdmin.auth.getUser).mockResolvedValueOnce({
+    mockSupabaseUserResponse({
       data: { user: { id: "user_1", email: "alex@example.com" } },
       error: null,
     });
@@ -150,7 +154,7 @@ describe("billing API routes", () => {
   });
 
   it("checkout marks gift subscriptions and asks for a recipient email", async () => {
-    vi.mocked(supabaseAdmin.auth.getUser).mockResolvedValueOnce({
+    mockSupabaseUserResponse({
       data: { user: { id: "user_1", email: "alex@example.com" } },
       error: null,
     });
@@ -226,7 +230,7 @@ describe("billing API routes", () => {
   });
 
   it("checkout returns a user-safe error when Stripe fails", async () => {
-    vi.mocked(supabaseAdmin.auth.getUser).mockResolvedValueOnce({
+    mockSupabaseUserResponse({
       data: { user: { id: "user_1", email: "alex@example.com" } },
       error: null,
     });
@@ -258,7 +262,7 @@ describe("billing API routes", () => {
   });
 
   it("portal returns 401 when the token is invalid", async () => {
-    vi.mocked(supabaseAdmin.auth.getUser).mockResolvedValueOnce({ data: { user: null }, error: null });
+    mockSupabaseUserResponse({ data: { user: null }, error: null });
     const { POST } = await import("@/app/api/billing/portal/route");
 
     const response = await POST(createRequest({}));
@@ -268,7 +272,7 @@ describe("billing API routes", () => {
   });
 
   it("portal returns 404 when no Stripe customer exists", async () => {
-    vi.mocked(supabaseAdmin.auth.getUser).mockResolvedValueOnce({
+    mockSupabaseUserResponse({
       data: { user: { id: "user_1", email: "alex@example.com" } },
       error: null,
     });
@@ -282,7 +286,7 @@ describe("billing API routes", () => {
   });
 
   it("portal creates a Stripe portal session", async () => {
-    vi.mocked(supabaseAdmin.auth.getUser).mockResolvedValueOnce({
+    mockSupabaseUserResponse({
       data: { user: { id: "user_1", email: "alex@example.com" } },
       error: null,
     });
@@ -303,7 +307,7 @@ describe("billing API routes", () => {
   });
 
   it("portal returns a clean error when Stripe fails", async () => {
-    vi.mocked(supabaseAdmin.auth.getUser).mockResolvedValueOnce({
+    mockSupabaseUserResponse({
       data: { user: { id: "user_1", email: "alex@example.com" } },
       error: null,
     });
