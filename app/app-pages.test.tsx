@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
+import AccountRoute from "@/app/account/page";
+import AccountManagementRoute from "@/app/account-management/page";
 import BillingSuccessPage from "@/app/billing/success/page";
 import FindHelpRoute from "@/app/find-help/page";
 import FindSupportRoute from "@/app/find-support/page";
@@ -69,6 +71,22 @@ describe("app routes", () => {
     const html = renderToStaticMarkup(<BillingSuccessPage />);
 
     expect(html).toContain("Your donation is being activated.");
+    expectNoGlobalShell(html);
+  });
+
+  it("renders account route content", () => {
+    const html = renderToStaticMarkup(<AccountRoute />);
+
+    expect(html).toContain("Account Management");
+    expect(html).toContain("Private Profile");
+    expectNoGlobalShell(html);
+  });
+
+  it("renders account management route content", () => {
+    const html = renderToStaticMarkup(<AccountManagementRoute />);
+
+    expect(html).toContain("Account Management");
+    expect(html).toContain("Private Profile");
     expectNoGlobalShell(html);
   });
 });

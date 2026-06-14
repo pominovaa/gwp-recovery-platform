@@ -17,6 +17,7 @@ describe("root layout", () => {
 
     expect(html).toContain("<html");
     expect(html).toContain("<main>");
+    expect(html).toContain("<header");
     expect(html).toContain("Page content");
     expect(html).toContain("Get Whole Project");
     expect(html).toContain("Privacy");

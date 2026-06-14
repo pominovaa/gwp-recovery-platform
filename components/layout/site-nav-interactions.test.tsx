@@ -32,7 +32,7 @@ describe("site nav interactions", () => {
 
     render(<SiteNav />);
 
-    expect(await screen.findByRole("button", { name: "AL" })).toBeTruthy();
+    expect((await screen.findByRole("link", { name: "AL" })).getAttribute("href")).toBe("/account");
   });
 
   it("opens mobile navigation", async () => {
@@ -108,14 +108,12 @@ describe("site nav interactions", () => {
     expect(await screen.findByText("Check your email to confirm your account, then come back to sign in.")).toBeTruthy();
   });
 
-  it("signs out an authenticated user", async () => {
+  it("links authenticated users to account management", async () => {
     mockBrowserSession({ user: { id: "user_1", email: "alex@example.com" } });
     mockProfileInitials("AL");
 
     render(<SiteNav />);
-    await userEvent.click(await screen.findByRole("button", { name: "AL" }));
-    await userEvent.click(await screen.findByRole("button", { name: "Sign out" }));
 
-    expect(supabaseBrowser.auth.signOut).toHaveBeenCalled();
+    expect((await screen.findByRole("link", { name: "AL" })).getAttribute("href")).toBe("/account");
   });
 });
