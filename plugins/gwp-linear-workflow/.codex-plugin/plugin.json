@@ -1,6 +1,6 @@
 {
   "name": "gwp-linear-workflow",
-  "version": "0.1.0+codex.20260613233329",
+  "version": "0.1.0+codex.20260614021052",
   "description": "Local Codex workflow for implementing, resuming, validating, opening, checking comments on, and reviewing GWP Recovery Platform Linear issue pull requests.",
   "author": {
     "name": "GWP Recovery Platform"

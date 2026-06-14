@@ -73,22 +73,64 @@ Outbound PR review mode is separate from resume mode. If the developer asks
 `review PR for GWP-XX` or `review pull request for GWP-XX`, run the outbound PR
 review workflow below instead of the manual PR comment check.
 
-## Required Preflight
+## Claim Gate And Required Preflight
 
-Before changing Linear status, creating a branch, editing files, committing,
-pushing, or creating a PR, verify:
+In explicit work mode, claim the issue at the earliest safe point.
 
-1. `origin` points to `olena-ageyeva/gwp-recovery-platform`.
-2. The workflow targets the upstream repository, not an unrelated fork.
-3. The worktree is clean, or the developer explicitly approves continuing with existing changes.
-4. The current branch is not `main` before implementation commits are made.
-5. Local `main` is fresh enough to branch from, or `git pull` on `main` succeeds.
-6. The Linear issue exists and belongs to the expected GWP team/project scope.
-7. Linear MCP is configured and authenticated.
-8. GitHub authentication is available for PR creation.
-9. The developer can push a branch to the upstream repository.
-10. The native Linear GitHub integration is installed for the upstream repository, when observable.
-11. `npm test`, `npm run lint`, `npm run typecheck`, and `npm run build` are defined and runnable.
+Before the first mutation, verify only:
+
+1. The user explicitly requested work mode for a valid GWP issue.
+2. `origin` points to `olena-ageyeva/gwp-recovery-platform`.
+3. Linear MCP is authenticated and the issue can be fetched.
+4. The issue belongs to the expected GWP team/project scope.
+5. The issue status is eligible for work.
+
+Then assign the issue to `me` and move an eligible `Todo` issue to `In Progress`,
+verifying both writes with the required readback and one-retry procedure. Do
+this before planning and before the remaining preflight. If a later check fails,
+leave the verified assignment and `In Progress` status in place and report the
+partial progress.
+
+After the claim, verify:
+
+1. The workflow targets the upstream repository, not an unrelated fork.
+2. GitHub authentication is available for PR creation.
+3. The developer can push a branch to the upstream repository.
+4. The native Linear GitHub integration is installed for the upstream repository, when observable.
+5. `npm test`, `npm run lint`, `npm run typecheck`, and `npm run build` are defined and runnable.
+6. The current branch and worktree state are known before branch preparation.
+
+After any required stash is verified, refresh local `main`, create or check out
+the intended issue branch, and verify implementation commits will not be made
+on `main`.
+
+Read-only explain or plan mode must not claim the issue or mutate Git state.
+
+### Dirty worktree branch preparation
+
+Before checking out a different issue branch:
+
+1. Record the current branch, or `detached-head`.
+2. Inspect visible changed paths for prohibited secret files such as `.env`,
+   `.env.local`, `.env.production`, and `.env.*.local`. Stop without stashing
+   those files if any are present.
+3. If tracked or untracked changes exist, run:
+
+   ```bash
+   git stash push --include-untracked \
+     -m "gwp-linear-to-pr: pre-branch gwp-xx from <branch> at <UTC timestamp>"
+   ```
+
+4. Verify a new stash exists with the expected lowercase issue ID, original
+   branch, and timestamp in its message; capture the exact stash ref.
+5. Verify `git status --porcelain` is empty before checkout.
+6. Leave the stash intact and report its ref and message. Never pop or apply it
+   to the issue branch automatically.
+
+`--include-untracked` excludes ignored files. If stashing or verification fails,
+stop before checkout and report that the issue remains claimed and `In Progress`.
+Do not automatically stash resume work when already on the intended issue
+branch; those changes may belong to the active issue.
 
 ### GitHub CLI sandbox handling
 
@@ -123,44 +165,48 @@ fork-based PR only after the developer explicitly approves that fallback.
    status, assignee, `gitBranchName`, and acceptance criteria.
 5. If issue status is not `Todo`, warn the developer and ask whether to continue.
 6. If the issue is `Backlog`, `Canceled`, or `Duplicate`, stop unless the developer explicitly overrides.
-7. Run the required preflight checklist above.
+7. Run the minimal claim gate above.
 8. Use `gwp-linear-ops` to resolve the issue team's workflow state IDs before changing Linear status. Never hardcode Linear state IDs.
 9. Use `gwp-linear-ops` to assign the issue to `me`, re-fetch it, and confirm
    the assignee before branch or code work.
-10. Use `gwp-linear-ops` to move the Linear issue to `In Progress`, re-fetch it,
+10. Use `gwp-linear-ops` to move an eligible `Todo` issue to `In Progress`, re-fetch it,
     and confirm the actual status. Retry once; if verification still fails, stop
     with a partial-success summary.
-11. Confirm the exact Linear issue identifier and title before naming the branch
+11. Run the remaining preflight above. Do not roll back the claim if a later
+    check fails.
+12. Confirm the exact Linear issue identifier and title before naming the branch
     or PR.
-12. Create the branch from fresh `main`. Use Linear `gitBranchName` exactly when
+13. Apply the dirty-worktree branch preparation rules before switching away
+    from the current branch.
+14. Create the branch from fresh `main`. Use Linear `gitBranchName` exactly when
     it is present. Otherwise create
     `<owner>/<issue-key-lower>-<short-title-slug>`.
-13. Spawn the `gwp_planner` agent in read-only mode.
-14. Present the implementation plan and acceptance criteria to the developer.
-15. Wait for explicit developer approval before editing code.
-16. After approval, use `gwp-linear-ops` to post the approved plan and acceptance criteria as a Linear comment.
-17. Spawn the `gwp_developer` agent to inspect related code and tests before
+15. Spawn the `gwp_planner` agent in read-only mode.
+16. Present the implementation plan and acceptance criteria to the developer.
+17. Wait for explicit developer approval before editing code.
+18. After approval, use `gwp-linear-ops` to post the approved plan and acceptance criteria as a Linear comment.
+19. Spawn the `gwp_developer` agent to inspect related code and tests before
     implementing the approved plan.
-18. Require tests to be added or updated for behavior changes. For defects,
+20. Require tests to be added or updated for behavior changes. For defects,
     require root-cause and prevention notes plus regression coverage.
-19. Run targeted tests for changed behavior first.
-20. Run `npm test`, `npm run lint`, `npm run typecheck`, and `npm run build`.
+21. Run targeted tests for changed behavior first.
+22. Run `npm test`, `npm run lint`, `npm run typecheck`, and `npm run build`.
     For frontend changes, perform bounded visual validation when practical and
     record the result or exact reason it was skipped.
-21. If verification fails, repair up to 3 cycles, then stop with a summary.
-22. Commit changes on the issue branch with the Linear issue ID in the commit message.
-23. Spawn the `gwp_validator` agent in read-only mode to review `git diff main...HEAD`.
-24. If validation fails, return findings to development, repair, recommit, rerun verification, and validate again, up to 3 cycles.
-25. Do not push or create a PR unless validation returns PASS.
-26. Push the issue branch to the upstream repository.
-27. Create a GitHub PR titled `<ISSUE-ID>: <exact Linear title>` with the
+23. If verification fails, repair up to 3 cycles, then stop with a summary.
+24. Commit changes on the issue branch with the Linear issue ID in the commit message.
+25. Spawn the `gwp_validator` agent in read-only mode to review `git diff main...HEAD`.
+26. If validation fails, return findings to development, repair, recommit, rerun verification, and validate again, up to 3 cycles.
+27. Do not push or create a PR unless validation returns PASS.
+28. Push the issue branch to the upstream repository.
+29. Create a GitHub PR titled `<ISSUE-ID>: <exact Linear title>` with the
     required PR body sections.
-28. Use `gwp-linear-ops` to move the Linear issue to `In Review`, re-fetch it,
+30. Use `gwp-linear-ops` to move the Linear issue to `In Review`, re-fetch it,
     and confirm the actual status. Retry once; if it remains incorrect, report
     the PR as partial success instead of claiming workflow completion.
-29. Use `gwp-linear-ops` to post a PR-created checkpoint containing the
+31. Use `gwp-linear-ops` to post a PR-created checkpoint containing the
     confirmed fetched Linear status.
-30. Stop cleanly and tell the developer to use `gwp-linear-to-pr check PR comments for GWP-XX` or `gwp-linear-to-pr resume workflow for GWP-XX` when they want Codex to inspect PR feedback.
+32. Stop cleanly and tell the developer to use `gwp-linear-to-pr check PR comments for GWP-XX` or `gwp-linear-to-pr resume workflow for GWP-XX` when they want Codex to inspect PR feedback.
 
 Any workflow execution that edits repository files must not stop with local-only
 changes or unpushed commits. After verification and validation pass, the final

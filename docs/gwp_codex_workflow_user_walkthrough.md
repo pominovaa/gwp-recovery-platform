@@ -217,16 +217,29 @@ The workflow should:
 
 1. Confirm it is running in the GWP Recovery Platform repository.
 2. Fetch the Linear issue.
-3. Run preflight checks.
-4. Assign the issue to the current developer and verify the assignment by
-   re-fetching the issue.
+3. Run the minimal claim gate for Linear authentication, issue scope, and
+   eligible status.
+4. Immediately assign the issue to the current developer and verify the
+   assignment by re-fetching the issue.
 5. Move the Linear issue from `Todo` to `In Progress` and verify the returned
    status by re-fetching it.
-6. Confirm the exact issue identifier and title.
-7. Create the branch from Linear `gitBranchName` when present; otherwise use the
+6. Run the remaining GitHub, branch, dependency, and verification-readiness
+   preflight checks.
+7. Confirm the exact issue identifier and title.
+8. If switching branches with a dirty worktree, stash tracked and untracked
+   non-ignored changes with a message containing the lowercase issue ID,
+   original branch, and UTC timestamp. Codex verifies and retains the stash,
+   reports its ref, and never applies it to the issue branch automatically.
+9. Create the branch from Linear `gitBranchName` when present; otherwise use the
    documented owner/issue/title fallback.
-8. Produce an implementation plan and acceptance criteria after reading related
+10. Produce an implementation plan and acceptance criteria after reading related
    code and tests.
+
+If a visible `.env` or other prohibited secret file is dirty, Codex stops
+before checkout instead of putting the secret into a stash. If stash creation
+or verification fails, the issue remains assigned and `In Progress`, and Codex
+reports the exact recovery step. Resume mode does not auto-stash dirty work
+when already on the intended issue branch.
 
 To resume interrupted work, enter:
 
@@ -492,18 +505,21 @@ approve the PR, or submit an official GitHub review event.
 
 For any issue, confirm these observations:
 
-1. Linear issue moves from `Todo` to `In Progress`.
-2. Approved implementation plan is posted as a Linear comment.
-3. Branch name includes `GWP-XX`.
-4. Commit message includes `GWP-XX`.
-5. Validation returns `PASS` before push or PR creation.
-6. PR targets the intended upstream base branch.
-7. PR body includes the Linear issue, acceptance criteria, verification,
+1. Linear issue is assigned and moves from `Todo` to `In Progress` before the
+   broader preflight and planning.
+2. Dirty pre-existing work is stored in a retained, issue-labeled stash before
+   switching branches.
+3. Approved implementation plan is posted as a Linear comment.
+4. Branch name includes `GWP-XX`.
+5. Commit message includes `GWP-XX`.
+6. Validation returns `PASS` before push or PR creation.
+7. PR targets the intended upstream base branch.
+8. PR body includes the Linear issue, acceptance criteria, verification,
    validation, risk notes, screenshots or preview notes, and follow-ups.
-8. Linear issue moves to `In Review` after PR creation.
-9. Linear-GitHub integration links the PR to the issue.
-10. Resume mode detects the linked PR and any unhandled review feedback.
-11. A PR-feedback follow-up plan is presented before any code changes.
+9. Linear issue moves to `In Review` after PR creation.
+10. Linear-GitHub integration links the PR to the issue.
+11. Resume mode detects the linked PR and any unhandled review feedback.
+12. A PR-feedback follow-up plan is presented before any code changes.
 
 ## Hard boundaries
 

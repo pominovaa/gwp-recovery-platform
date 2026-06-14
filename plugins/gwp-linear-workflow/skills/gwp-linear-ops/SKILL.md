@@ -32,15 +32,18 @@ cycles unless the developer explicitly asks for that separate Linear task.
    priority, assignee, `gitBranchName`, comments, and existing acceptance
    criteria.
 4. Resolve workflow statuses from the issue's team before any status update.
-5. Assign the issue to `me` only when the parent workflow enters work mode.
-6. Update issue status only when the parent `gwp-linear-to-pr` workflow says the gate for that transition has passed.
+5. Assign the issue to `me` immediately after the parent workflow's minimal
+   claim gate passes in explicit work mode.
+6. Move an eligible `Todo` issue to `In Progress` immediately after assignment
+   verification, before the parent workflow's broader preflight and planning.
 7. Verify every assignment or status write using the readback procedure below.
 8. Create Linear comments only when the workflow requires a durable artifact, such as the approved plan, PR-created summary, PR-comment checkpoint, follow-up implementation checkpoint, or final PR summary.
 
 ## Assignment And Write Verification
 
-Before branch or code work, assign the issue to `me`. Immediately re-fetch the
-issue and confirm that the returned assignee is the current Linear user.
+Before the broader preflight, planning, branch, or code work, assign the issue
+to `me`. Immediately re-fetch the issue and confirm that the returned assignee
+is the current Linear user.
 
 After every assignment or status update:
 
@@ -62,7 +65,13 @@ Move `Todo` to `In Progress` only after the parent workflow confirms:
 - The repository is `olena-ageyeva/gwp-recovery-platform`.
 - The issue is in scope for the GWP workflow.
 - The developer intentionally asked Codex to work on the issue.
-- Required preflight checks passed.
+- Linear authentication is available.
+- The issue is eligible for work and the team-scoped state was resolved.
+
+Do not wait for GitHub authentication, push access, worktree preparation,
+dependency readiness, or planning before performing this verified claim.
+Later failures leave the issue assigned and `In Progress`; the parent workflow
+must report partial progress instead of rolling the claim back.
 
 Move `In Progress` to `In Review` only after the parent workflow confirms:
 

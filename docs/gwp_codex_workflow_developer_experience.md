@@ -48,10 +48,14 @@ gwp-linear-to-pr Work on Linear issue GWP-XX
 
 From there:
 
-1. **Claim.** Codex confirms the repo remote, fetches the Linear issue, checks
-   Linear and GitHub auth, assigns the issue to the current developer, resolves
-   Linear workflow states, verifies the `In Progress` write by re-fetching the
-   issue, and creates the branch from Linear `gitBranchName` when available.
+1. **Claim.** Codex confirms the upstream repo, fetches the Linear issue, checks
+   Linear auth and issue scope, immediately assigns the issue to the current
+   developer, resolves Linear workflow states, and verifies the `In Progress`
+   write by re-fetching the issue. It then checks GitHub and remaining preflight
+   requirements. Before switching branches, it stores dirty tracked and
+   untracked non-ignored work in a verified, retained stash whose message
+   identifies the issue, original branch, and UTC timestamp, then creates the
+   branch from Linear `gitBranchName` when available.
 2. **Plan.** The read-only Planning Agent produces an implementation plan,
    acceptance criteria, test plan, risks, and open questions. The root Codex
    session shows that plan to the developer.
@@ -171,9 +175,15 @@ files.
 
 The workflow fails safe:
 
-- **Auth/preflight fails:** Codex stops before Linear status changes or branch
-  work. If `gh` fails only inside the Codex sandbox, Codex retries outside the
-  sandbox before treating it as a real auth failure.
+- **Claim-gate failure:** Codex stops before Linear or Git mutation.
+- **Later auth/preflight failure:** Codex stops before branch or code work but
+  leaves the verified assignment and `In Progress` status intact. If `gh` fails
+  only inside the Codex sandbox, Codex retries outside the sandbox before
+  treating it as a real auth failure.
+- **Dirty-worktree stash failure:** Codex stops before checkout, reports the
+  original branch, any created stash ref, remaining dirty paths, and the exact
+  recovery step. It never stashes visible secret files or automatically applies
+  the stash to the issue branch.
 - **Verification fails:** Codex repairs up to 3 cycles, then stops without PR
   creation or PR update.
 - **Validation fails:** Codex repairs up to 3 cycles, then stops without push or

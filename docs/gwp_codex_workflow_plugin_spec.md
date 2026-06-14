@@ -148,9 +148,11 @@ Codex must not:
 Use this mode when the developer explicitly asks Codex to work on or implement a
 Linear issue.
 
-After required preflight checks pass, Codex may move the issue to `In Progress`
-and create the issue branch. Codex must not edit files, commit, push, or create
-a PR until the developer approves the implementation plan.
+After the minimal claim gate passes, Codex must immediately assign the issue to
+the current developer and move an eligible `Todo` issue to `In Progress`, with
+readback verification for both writes. Codex then runs the remaining preflight
+and prepares the issue branch. Codex must not edit files, commit, push, or
+create a PR until the developer approves the implementation plan.
 
 ### Resume mode
 
@@ -178,24 +180,51 @@ Outbound PR review mode is separate from resume mode. If the developer asks to
 `review PR for GWP-XX` or `review pull request for GWP-XX`, Codex must run the
 outbound PR review workflow instead of the manual PR comment check.
 
-## Required preflight
+## Claim gate and required preflight
 
-Before changing Linear status, creating a branch, editing files, committing, or
-creating a PR, Codex must run a preflight check.
+Work mode separates the initial claim gate from the remaining preflight so the
+issue is reserved as soon as the workflow intentionally starts.
 
-The preflight must verify:
+Before the first mutation, the claim gate must verify:
 
-1. The current Git repository remote points to `olena-ageyeva/gwp-recovery-platform`.
-2. The workflow is targeting the upstream repository, not an unrelated fork.
-3. The current worktree is clean, or the developer explicitly approves working with existing changes.
-4. The current branch is not `main` before implementation commits are made.
-5. The local `main` branch is up to date enough to branch from, or `git pull` succeeds.
-6. The Linear issue exists and belongs to the expected `GWP` team/project scope.
-7. Linear MCP authentication is available.
-8. GitHub authentication is available for PR creation.
-9. The developer can push a branch to the upstream repository.
-10. The native Linear GitHub integration is installed for `olena-ageyeva/gwp-recovery-platform`.
-11. The repository defines runnable `npm test`, `npm run lint`, `npm run typecheck`, and `npm run build` scripts (see "Known repository prerequisites").
+1. The developer explicitly requested work mode for a valid `GWP-XX` issue.
+2. The current Git repository remote points to `olena-ageyeva/gwp-recovery-platform`.
+3. Linear MCP authentication is available and the issue can be fetched.
+4. The issue belongs to the expected `GWP` team/project scope.
+5. The issue status is eligible for work. `Backlog`, `Canceled`, and `Duplicate`
+   remain blocked unless the developer explicitly overrides them.
+
+After the claim gate passes, Codex must:
+
+1. Assign the issue to `me`, re-fetch it, and verify the assignee.
+2. Resolve the team-scoped `In Progress` state.
+3. Move an eligible `Todo` issue to `In Progress`, re-fetch it, and verify the
+   status.
+4. Apply the existing one-retry rule to each Linear write and stop with partial
+   success if either readback still differs.
+
+This verified assignment and status transition must happen before planning and
+before the broader GitHub, branch, dependency, and verification-readiness
+checks. If a later check fails, Codex must not roll the claim back; it reports
+that the issue remains assigned and `In Progress`.
+
+After the claim succeeds, the remaining preflight must verify:
+
+1. The workflow is targeting the upstream repository, not an unrelated fork.
+2. GitHub authentication is available for PR creation.
+3. The developer can push a branch to the upstream repository.
+4. The native Linear GitHub integration is installed for
+   `olena-ageyeva/gwp-recovery-platform`, when observable.
+5. The repository defines runnable `npm test`, `npm run lint`,
+   `npm run typecheck`, and `npm run build` scripts.
+6. The current branch and worktree state are known before branch preparation.
+
+After any required stash is verified, Codex must refresh local `main`, create or
+check out the intended issue branch, and verify that implementation commits will
+not be made on `main`.
+
+Read-only explain or plan mode does not run the claim sequence, change Linear,
+or mutate Git state.
 
 GitHub CLI checks must account for Codex sandbox behavior. If `gh auth status`,
 `gh auth token`, `gh pr create`, or a GitHub API command fails inside Codex with
@@ -213,6 +242,44 @@ developer may then choose either:
 When using a fork fallback, Codex must still open the PR against
 `olena-ageyeva/gwp-recovery-platform:main`, and the Linear GitHub integration
 must still be configured for the upstream repository.
+
+### Dirty-worktree branch preparation
+
+Before checking out a different issue branch, inspect tracked and untracked
+changes with Git. A dirty worktree is handled automatically rather than waiting
+for separate developer approval.
+
+1. Record the current branch, or `detached-head` when no branch is checked out.
+2. Inspect visible changed paths for prohibited secret files such as `.env`,
+   `.env.local`, `.env.production`, and `.env.*.local`. If any are present, do
+   not stash them; stop before checkout and report the files that must be
+   secured or ignored.
+3. Create a stash containing tracked and untracked changes, but not ignored
+   files:
+
+   ```bash
+   git stash push --include-untracked \
+     -m "gwp-linear-to-pr: pre-branch gwp-xx from <branch> at <UTC timestamp>"
+   ```
+
+4. The stash message must contain the lowercase issue ID, the original branch,
+   and a UTC timestamp.
+5. Verify that a new stash entry exists with the expected message and capture
+   its exact stash ref.
+6. Verify that `git status --porcelain` is empty before checking out or creating
+   the issue branch.
+7. Leave the stash intact. Never pop or apply unrelated work onto the issue
+   branch automatically. Report the stash ref and message in the workflow
+   summary so the developer can restore it deliberately later.
+
+`--include-untracked` intentionally excludes ignored files. If stashing fails,
+the expected stash cannot be verified, or the worktree remains dirty, stop
+before checkout. Report that the issue remains claimed and `In Progress`, along
+with the exact Git/stash failure and recovery step.
+
+Resume mode must not automatically stash when the current branch is already the
+intended issue branch; dirty changes there may be legitimate in-progress issue
+work. Inspect and preserve that state as part of resume detection.
 
 ## Linear statuses
 
@@ -276,12 +343,16 @@ Codex may move the Linear issue from `Todo` to `In Progress` only after:
 2. The current Git repository has been confirmed as `olena-ageyeva/gwp-recovery-platform`.
 3. The issue is confirmed to be in scope for this workflow.
 4. The developer has intentionally asked Codex to work on the issue.
-5. Required preflight checks have passed.
+5. Linear authentication and the team-scoped `In Progress` state have been
+   resolved successfully.
 
 If the issue is not in `Todo`, Codex should warn the developer and ask for confirmation before proceeding.
 
 Codex must not move an issue to `In Progress` for read-only explanation, review,
 or planning requests.
+
+After this claim is verified, later preflight or branch-preparation failures do
+not move the issue back to `Todo` or remove the assignee.
 
 ### In Progress → In Review
 
@@ -677,11 +748,17 @@ Determine workflow mode
   ↓
 Fetch Linear issue
   ↓
-Run required preflight
+Run minimal claim gate
+  ↓
+Assign issue to current developer and verify
   ↓
 Move Linear issue to In Progress
   ↓
-Create issue branch
+Run remaining auth, repository, and dependency preflight
+  ↓
+Stash a dirty worktree when switching branches and verify the stash
+  ↓
+Refresh main and create issue branch
   ↓
 Spawn Planning Agent
   ↓
@@ -739,9 +816,10 @@ The planning phase may inspect files, read the issue, search the codebase, and p
 
 The planning phase must not edit files.
 
-In work mode, Codex may claim the issue and create the issue branch before plan
-approval only after preflight passes. It must not edit files, commit, push, or
-create a PR before approval.
+In work mode, Codex claims the issue immediately after the minimal claim gate.
+It runs the remaining preflight and creates or checks out the issue branch
+before plan approval. It must not edit files, commit, push, or create a PR
+before approval.
 
 The developer must approve with an explicit response such as:
 
@@ -1438,39 +1516,47 @@ a branch, editing files, committing, pushing, or creating a PR.
    status, assignee, `gitBranchName`, and acceptance criteria.
 5. If issue status is not `Todo`, warn the developer and ask whether to continue.
 6. If the issue is in `Backlog`, `Canceled`, or `Duplicate`, stop unless the developer explicitly overrides.
-7. Run the required preflight checks.
+7. Run the minimal claim gate: verify the explicit work request, upstream repo,
+   Linear authentication, issue scope, and eligible status.
 8. Assign the issue to `me`, re-fetch it, and confirm the actual assignee.
-9. Move the Linear issue to `In Progress`, re-fetch it, and confirm the actual
+9. Move an eligible `Todo` issue to `In Progress`, re-fetch it, and confirm the actual
    status; retry once and report partial success if verification still fails.
-10. Confirm the exact issue key and title, then use Linear `gitBranchName` when
+10. Run the remaining GitHub, branch, dependency, and verification-readiness
+    preflight. Do not roll back the verified claim if a later check fails.
+11. Confirm the exact issue key and title, then use Linear `gitBranchName` when
     present; otherwise create `<owner>/<issue-key-lower>-<short-title-slug>`
     from fresh `main`.
-11. Spawn the Planning Agent in read-only mode.
-12. Present the implementation plan and acceptance criteria to the developer.
-13. Wait for explicit developer approval. The Planning Agent cannot ask the
+12. Before switching to a different issue branch, automatically stash tracked
+    and untracked changes with `--include-untracked`, an issue-labeled message,
+    the original branch, and a UTC timestamp. Reject visible secret files,
+    verify the new stash and clean worktree, retain the stash, and report its
+    ref. Do not auto-stash resume work already on the intended issue branch.
+13. Spawn the Planning Agent in read-only mode.
+14. Present the implementation plan and acceptance criteria to the developer.
+15. Wait for explicit developer approval. The Planning Agent cannot ask the
     developer directly; relay its open questions and answers in the root session.
-14. After approval, post the approved plan and acceptance criteria as a Linear comment.
-15. Spawn the Development Agent to read related code/tests and implement the approved plan.
-16. Require tests to be added or updated for behavior changes.
-17. Run targeted tests for the changed behavior.
-18. Run `npm test`.
-19. Run `npm run lint`.
-20. Run `npm run typecheck`.
-21. Run `npm run build`.
-22. If verification fails, repair up to 3 cycles.
-23. Commit the changes to the issue branch with the Linear issue ID in the message.
-24. Spawn the Validation Agent in read-only mode to review the committed diff.
-25. If validation fails, return findings to the Development Agent, repair, recommit, rerun verification, and validate again.
-26. Do not push or create a PR unless validation returns PASS.
-27. Push the issue branch to the upstream repository.
-28. Create a GitHub PR titled `<ISSUE-ID>: <exact Linear title>`.
-29. Include acceptance criteria, targeted/full verification, and conditional
+16. After approval, post the approved plan and acceptance criteria as a Linear comment.
+17. Spawn the Development Agent to read related code/tests and implement the approved plan.
+18. Require tests to be added or updated for behavior changes.
+19. Run targeted tests for the changed behavior.
+20. Run `npm test`.
+21. Run `npm run lint`.
+22. Run `npm run typecheck`.
+23. Run `npm run build`.
+24. If verification fails, repair up to 3 cycles.
+25. Commit the changes to the issue branch with the Linear issue ID in the message.
+26. Spawn the Validation Agent in read-only mode to review the committed diff.
+27. If validation fails, return findings to the Development Agent, repair, recommit, rerun verification, and validate again.
+28. Do not push or create a PR unless validation returns PASS.
+29. Push the issue branch to the upstream repository.
+30. Create a GitHub PR titled `<ISSUE-ID>: <exact Linear title>`.
+31. Include acceptance criteria, targeted/full verification, and conditional
     defect/frontend evidence in the PR body.
-30. Move the Linear issue to `In Review`, re-fetch and verify it, retrying once.
-31. Post a PR-created checkpoint with the confirmed fetched Linear status.
-32. Stop and tell the developer to run `check PR comments` or `resume workflow` later.
-33. If manually checking PR comments finds feedback requiring changes, produce a follow-up plan, wait for approval, update the branch, rerun verification and validation, push, and checkpoint the follow-up.
-34. If asked to `review PR for GWP-XX`, spawn the read-only Reviewer Agent and
+32. Move the Linear issue to `In Review`, re-fetch and verify it, retrying once.
+33. Post a PR-created checkpoint with the confirmed fetched Linear status.
+34. Stop and tell the developer to run `check PR comments` or `resume workflow` later.
+35. If manually checking PR comments finds feedback requiring changes, produce a follow-up plan, wait for approval, update the branch, rerun verification and validation, push, and checkpoint the follow-up.
+36. If asked to `review PR for GWP-XX`, spawn the read-only Reviewer Agent and
     create or update one canonical top-level PR comment without editing files or
     changing Linear status.
 
@@ -1938,8 +2024,8 @@ output mentions invalid token, missing OAuth token, keyring access, disabled
 network, or host-resolution errors. A sandbox-only failure is not enough to tell
 the developer to re-authenticate.
 
-Do not change Linear status, create a branch, edit files, commit, push, or create
-a PR.
+If this failure occurs after the claim gate, leave the issue assigned and
+`In Progress`. Do not create a branch, edit files, commit, push, or create a PR.
 
 If the developer approves a fork fallback, Codex may continue with a fork-based
 branch and PR targeting `olena-ageyeva/gwp-recovery-platform:main`.
@@ -1951,6 +2037,13 @@ Stop unless the developer explicitly overrides.
 ### Issue is already In Progress or In Review
 
 Warn the developer and ask whether to continue.
+
+### Dirty-worktree stash or verification fails
+
+Stop before checking out another branch. Leave the issue assigned and
+`In Progress`. Report the original branch, intended issue branch, stash command
+or verification failure, any created stash ref, remaining dirty paths, and the
+exact recovery step. Do not pop or apply a stash automatically.
 
 ### Planning reveals missing requirements
 

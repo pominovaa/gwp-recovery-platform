@@ -15,19 +15,29 @@ not a replacement for the workflow spec.
 
 When working on a Linear issue:
 
-1. Assign the issue to the current developer and verify the assignment.
-2. Verify every Linear status write by re-fetching the issue; retry once and
-   report partial success if the readback still differs.
-3. Prefer Linear `gitBranchName`; otherwise use a branch containing the issue ID.
-4. Use the Linear issue ID in commit messages.
-5. Use `<ISSUE-ID>: <exact Linear title>` for the PR title.
-6. Do not commit directly to `main`.
-7. Read related code and tests before editing.
-8. Keep changes focused on the active Linear issue.
-9. Do not broaden scope without approval.
-10. Add or update tests for behavior changes.
-11. Run targeted tests before the full verification gate.
-12. Before PR creation, run:
+1. After confirming explicit work mode, the upstream repo, Linear
+   authentication, issue scope, and eligible status, immediately assign the
+   issue to the current developer and move `Todo` to `In Progress`.
+2. Verify every Linear assignment and status write by re-fetching the issue;
+   retry once and report partial success if the readback still differs.
+3. Claim the issue before the broader preflight and planning; do not roll the
+   claim back if a later check fails.
+4. Before switching to another issue branch, automatically stash tracked and
+   untracked non-ignored work with an issue-labeled message, verify the stash
+   and clean worktree, leave the stash intact, and report its ref. Never stash
+   visible secret files or automatically apply the stash to the issue branch.
+5. In resume mode, do not automatically stash dirty work already on the
+   intended issue branch.
+6. Prefer Linear `gitBranchName`; otherwise use a branch containing the issue ID.
+7. Use the Linear issue ID in commit messages.
+8. Use `<ISSUE-ID>: <exact Linear title>` for the PR title.
+9. Do not commit directly to `main`.
+10. Read related code and tests before editing.
+11. Keep changes focused on the active Linear issue.
+12. Do not broaden scope without approval.
+13. Add or update tests for behavior changes.
+14. Run targeted tests before the full verification gate.
+15. Before PR creation, run:
 
 ```bash
 npm test
@@ -36,11 +46,11 @@ npm run typecheck
 npm run build
 ```
 
-13. Do not create a PR unless tests, lint, typecheck, and build pass.
-14. Do not create a PR unless internal validation passes.
-15. For defects, include root cause, prevention notes, and regression coverage.
-16. For frontend changes, record bounded visual validation or a skip reason.
-11. For any workflow path that changes repository files, commit the changes and
+16. Do not create a PR unless tests, lint, typecheck, and build pass.
+17. Do not create a PR unless internal validation passes.
+18. For defects, include root cause, prevention notes, and regression coverage.
+19. For frontend changes, record bounded visual validation or a skip reason.
+20. For any workflow path that changes repository files, commit the changes and
     push the issue branch to GitHub before reporting completion.
 
 ## Linear Statuses
